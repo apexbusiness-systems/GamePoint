@@ -1,309 +1,195 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
-/* ── Data ─────────────────────────────────────────────────────────── */
-
-type TitleState = 'supported' | 'paused' | 'registry';
-type TitleCard = { name: string; state: TitleState; note: string };
-
-const titles: TitleCard[] = [
-  { name: 'Path of Exile 2', state: 'supported', note: 'Official API sources. Anti-cheat class recorded as server-side (inference).' },
-  { name: "Baldur's Gate 3", state: 'supported', note: 'Cleared. CC-BY-SA wiki and official patch notes.' },
-  { name: 'Elden Ring / Nightreign', state: 'supported', note: 'Cleared. Low-risk tier; EAC is disableable offline.' },
-  { name: 'Monster Hunter Wilds', state: 'supported', note: 'Official update notes. Publisher stance under continued review.' },
-  { name: 'Warframe', state: 'supported', note: 'Cleared. Official Public Export data.' },
-  { name: 'Diablo IV', state: 'paused', note: 'Paused until publisher terms review completes. Nothing is captured for paused titles.' },
-  { name: 'Grand Theft Auto VI', state: 'registry', note: 'Registry only until after launch and legal review. No coaching claims before there is a game to verify against.' },
-];
-
-/* ── Scroll reveal ────────────────────────────────────────────────── */
-
-function useReveal(): React.RefObject<HTMLDivElement | null> {
-  const ref = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { el.classList.add('in'); io.unobserve(el); } },
-      { threshold: 0.15 }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return ref;
-}
-
-function Reveal({ children, className = '' }: { children: React.ReactNode; className?: string }): React.JSX.Element {
-  const ref = useReveal();
-  return <div ref={ref} className={`reveal ${className}`}>{children}</div>;
-}
-
-/* ── Components ───────────────────────────────────────────────────── */
-
-function Nav(): React.JSX.Element {
+function Sidebar() {
   return (
-    <nav className="nav">
-      <div className="nav-left">
-        <span className="nav-mark">GP</span>
-        <span className="nav-name">GAMEPOINT</span>
+    <aside className="sidebar">
+      <div className="brand">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L22 7.7735V16.2265L12 22L2 16.2265V7.7735L12 2Z" stroke="var(--accent)" strokeWidth="2" />
+          <path d="M12 7L17 9.88675V14.1132L12 17L7 14.1132V9.88675L12 7Z" fill="var(--accent)" />
+        </svg>
+        <h1>GAMEPOINT</h1>
       </div>
-      <div className="nav-right">
-        <a href="#how" className="nav-link">How it works</a>
-        <a href="#boundaries" className="nav-link">Boundaries</a>
-        <a href="#titles" className="nav-link">Titles</a>
-        <a href="#download" className="btn-dl">Get early access →</a>
-      </div>
-    </nav>
-  );
-}
-
-function Hero(): React.JSX.Element {
-  return (
-    <section className="hero">
-      <div className="hero-left">
-        <p className="hero-tag">SCREEN-ONLY AI COACHING FOR PC</p>
-        <h1>
-          See more.<br />
-          <span className="accent">Play better.</span>
-        </h1>
-        <p className="hero-body">
-          The coach in your corner: it watches the fight, it never touches the controls. 
-          GamePoint reads your screen, not your game files. One frame, one
-          suggestion, zero injection. Your game stays untouched.
-        </p>
-        <div className="hero-ctas">
-          <a href="#download" className="btn-primary">Download for Windows</a>
-          <a href="#boundaries" className="btn-ghost">Privacy boundary ↓</a>
-        </div>
-      </div>
-      <div className="hero-right">
-        <div className="overlay-demo">
-          <div className="demo-screen">
-            <div className="demo-screen-label">YOUR GAME — UNTOUCHED</div>
-            <div className="demo-scanlines" />
-          </div>
-          <div className="demo-panel">
-            <div className="demo-panel-header">
-              <span className="demo-status-dot" />
-              GAMEPOINT OVERLAY
-            </div>
-            <div className="demo-advice">
-              <span className="demo-advice-label">ADVICE</span>
-              Push high ground before the circle closes. You have 18s.
-            </div>
-            <div className="demo-metrics">
-              <div className="demo-metric">
-                <span className="demo-metric-val">87%</span>
-                <span className="demo-metric-key">CONFIDENCE</span>
-              </div>
-              <div className="demo-metric">
-                <span className="demo-metric-val">1.2s</span>
-                <span className="demo-metric-key">LATENCY</span>
-              </div>
-              <div className="demo-metric">
-                <span className="demo-metric-val">VERIFIED</span>
-                <span className="demo-metric-key">SOURCE</span>
-              </div>
-            </div>
+      <nav className="nav-links">
+        <a href="#" className="nav-item active">Home</a>
+        <a href="#" className="nav-item">Live Overlay</a>
+        <a href="#" className="nav-item">Sessions</a>
+        <a href="#" className="nav-item">Replay Review</a>
+        <a href="#" className="nav-item">Coach Squad</a>
+        <a href="#" className="nav-item">Community</a>
+        <a href="#" className="nav-item">Insights</a>
+        <a href="#" className="nav-item">Settings</a>
+      </nav>
+      <div style={{ marginTop: 'auto', padding: '0 0.5rem' }}>
+        <div className="flex items-center gap-2" style={{ padding: '10px' }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--panel-border)' }} />
+          <div>
+            <div className="text-sm font-bold">PlayerOne</div>
+            <div className="text-xs text-muted">Level 24</div>
           </div>
         </div>
       </div>
-    </section>
+    </aside>
   );
 }
 
-function StatsBar(): React.JSX.Element {
+function DashboardHeader() {
   return (
-    <Reveal>
-      <div className="stats-bar">
-        <div className="stat">
-          <span className="stat-val">{'<'}1.5s</span>
-          <span className="stat-key">MAX LATENCY</span>
-        </div>
-        <div className="stat-div" />
-        <div className="stat">
-          <span className="stat-val">0</span>
-          <span className="stat-key">GAME INJECTION</span>
-        </div>
-        <div className="stat-div" />
-        <div className="stat">
-          <span className="stat-val">1</span>
-          <span className="stat-key">FRAME PER REQUEST</span>
-        </div>
-        <div className="stat-div" />
-        <div className="stat">
-          <span className="stat-val">LOCAL</span>
-          <span className="stat-key">OVERLAY RUNTIME</span>
-        </div>
-        <div className="stat-div" />
-        <div className="stat">
-          <span className="stat-val">RLS</span>
-          <span className="stat-key">DATA ISOLATION</span>
-        </div>
+    <header className="dashboard-header">
+      <div className="welcome">
+        <h2>Welcome back, <strong>PlayerOne</strong></h2>
       </div>
-    </Reveal>
-  );
-}
-
-function HowSection(): React.JSX.Element {
-  return (
-    <section id="how" className="section">
-      <Reveal>
-        <div className="section-label">01 — HOW IT WORKS</div>
-        <h2 className="section-h2">Three steps. Nothing hidden.</h2>
-      </Reveal>
-      <div className="how-grid">
-        <Reveal className="how-step">
-          <div className="step-num">01</div>
-          <h3>You press the key</h3>
-          <p>
-            GamePoint captures one screen frame or a region you select. 
-            Nothing happens until you trigger it. No background recording. 
-            No continuous capture.
-          </p>
-        </Reveal>
-        <Reveal className="how-step">
-          <div className="step-num">02</div>
-          <h3>We read the pixels</h3>
-          <p>
-            The frame goes through a budget-gated Supabase assist pipeline. 
-            Max 1,200 input tokens, 786K pixels, $0.0005 cost ceiling. 
-            No game memory, no packet hooks, no audio.
-          </p>
-        </Reveal>
-        <Reveal className="how-step">
-          <div className="step-num">03</div>
-          <h3>You see the advice</h3>
-          <p>
-            A short coaching suggestion appears on the overlay. Confidence 
-            score, source tier, and evidence ID attached. The frame is not 
-            stored. Session metadata is safe-only.
-          </p>
-        </Reveal>
+      <div className="header-actions">
+        <span className="badge online"><span className="text-accent">Overlay active</span></span>
+        <button className="btn-secondary" style={{ padding: '6px 10px' }}>🔔</button>
       </div>
-    </section>
+    </header>
   );
 }
 
-function BoundariesSection(): React.JSX.Element {
+function HeroWidget() {
   return (
-    <section id="boundaries" className="section">
-      <Reveal>
-        <div className="section-label">02 — PRIVACY BOUNDARY</div>
-        <h2 className="section-h2">What we do. What we never do.</h2>
-      </Reveal>
-      <div className="boundary-grid">
-        <Reveal className="boundary-col">
-          <div className="boundary-header yes">WHAT IT DOES</div>
-          <ul className="boundary-list">
-            <li>Processes one user-triggered frame</li>
-            <li>Routes through approved Supabase assist path</li>
-            <li>Returns advice text + confidence score</li>
-            <li>Shows safe session metadata in evidence view</li>
-            <li>Enforces cost and latency circuit breakers</li>
-            <li>Respects title compliance gating</li>
-          </ul>
-        </Reveal>
-        <Reveal className="boundary-col">
-          <div className="boundary-header no">WHAT IT NEVER DOES</div>
-          <ul className="boundary-list deny">
-            <li>Game injection or memory reads</li>
-            <li>Packet hooks or network interception</li>
-            <li>Microphone or system audio capture</li>
-            <li>Cloudflare-side frame streaming</li>
-            <li>Background recording without consent</li>
-            <li>Raw frame storage beyond processing</li>
-          </ul>
-        </Reveal>
+    <div className="panel widget-hero">
+      <h1>Coach in <br/><span>your</span> corner.</h1>
+      <p style={{ display: 'none' }}>
+        The coach in your corner: it watches the fight, it never touches the controls.
+      </p>
+      <p>Screen-only AI coaching.<br/>Real community. Real progress.</p>
+      <div className="flex gap-4 mt-4">
+        <button className="btn-primary">Go Live</button>
+        <button className="btn-secondary">Schedule a Session</button>
       </div>
-    </section>
+    </div>
   );
 }
 
-function TitlesSection(): React.JSX.Element {
+function CoachSquadWidget() {
+  const coaches = [
+    { name: 'MAYA', role: 'The Anchor' },
+    { name: 'RO', role: 'The Shotcaller' },
+    { name: 'NIKO', role: 'The Analyst' },
+    { name: 'JUNE', role: 'The Builder' },
+  ];
+
   return (
-    <section id="titles" className="section">
-      <Reveal>
-        <div className="section-label">03 — SUPPORTED TITLES</div>
-        <h2 className="section-h2">Compliance-gated. No exceptions.</h2>
-        <p className="section-sub">
-          Every title must pass a research report and legal review before 
-          runtime support is enabled. No auto-promotion.
-        </p>
-      </Reveal>
-      <div className="titles-list">
-        {titles.map((t) => (
-          <Reveal key={t.name} className="title-row">
-            <div className="title-row-left">
-              <span className="title-name">{t.name}</span>
-              <span className={`title-status ${t.state}`}>
-                {t.state === 'supported' ? '● SUPPORTED' : t.state === 'paused' ? '○ PAUSED' : '○ REGISTRY'}
-              </span>
-            </div>
-            <p className="title-note">{t.note}</p>
-          </Reveal>
+    <div className="panel widget-squad">
+      <div className="squad-header">
+        <div>
+          <h3>Coach Squad</h3>
+          <p>Your crew. Your edge.</p>
+        </div>
+        <a href="#" className="text-sm text-muted">View Coach Squad →</a>
+      </div>
+      <div className="squad-grid">
+        {coaches.map((c) => (
+          <div key={c.name} className="coach-card">
+            <div className="coach-name">{c.name}</div>
+            <div className="coach-role">{c.role}</div>
+            <div className="badge online" style={{ alignSelf: 'flex-start', background: 'transparent', border: 'none', padding: 0 }}>Online</div>
+          </div>
         ))}
       </div>
-    </section>
+    </div>
   );
 }
 
-function CtaSection(): React.JSX.Element {
+function DashboardApp() {
   return (
-    <section id="download" className="section cta-section">
-      <Reveal>
-        <div className="cta-block">
-          <div className="cta-left">
-            <h2>Ready to play smarter?</h2>
-            <p>
-              Windows installer is in early access. Local-only, release-gated, 
-              consent-first.
-            </p>
+    <div className="app-container">
+      <Sidebar />
+      <main className="dashboard-main">
+        <DashboardHeader />
+        
+        <HeroWidget />
+        <CoachSquadWidget />
+
+        <div className="panel widget-live-match">
+          <div className="flex justify-between mb-4">
+            <h3 className="font-bold text-sm">Live Match</h3>
+            <span className="badge" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}>• LIVE</span>
           </div>
-          <a href="#download" className="btn-primary btn-large">
-            Get early access →
-          </a>
+          <div className="flex items-center justify-between" style={{ padding: '1rem 0' }}>
+            <div style={{ width: 48, height: 48, background: 'var(--panel-border)', borderRadius: 8 }} />
+            <div className="text-xl font-bold mono">2 - 1</div>
+            <div style={{ width: 48, height: 48, background: 'var(--panel-border)', borderRadius: 8 }} />
+          </div>
+          <div className="flex justify-between text-xs text-muted mb-4">
+            <span>Your Team</span>
+            <span className="mono">24:18</span>
+            <span>Opponents</span>
+          </div>
+          <button className="btn-secondary" style={{ width: '100%' }}>VIEW OVERLAY</button>
         </div>
-      </Reveal>
-    </section>
+
+        <div className="panel widget-advice-feed">
+          <div className="flex justify-between mb-4">
+            <h3 className="font-bold text-sm">Advice Feed</h3>
+            <span className="badge text-accent">7 new</span>
+          </div>
+          <div className="flex flex-col gap-4" style={{ flex: 1, overflowY: 'auto' }}>
+            <div className="text-sm text-muted">
+              <strong className="text-accent">RO</strong>
+              <div className="text-xs">Good rotate. You drew attention top side.</div>
+            </div>
+            <div className="text-sm text-muted">
+              <strong className="text-accent">MAYA</strong>
+              <div className="text-xs">Anchor the next push. Hold the angle.</div>
+            </div>
+          </div>
+          <a href="#" className="text-xs text-muted mt-4">View all advice →</a>
+        </div>
+
+        <div className="panel widget-progress">
+          <h3 className="font-bold text-sm mb-4">Your Progress</h3>
+          {/* Mock Radar Chart */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '140px' }}>
+            <svg viewBox="0 0 100 100" style={{ width: 120, height: 120 }}>
+              <polygon points="50,10 90,35 90,80 50,100 10,80 10,35" fill="none" stroke="var(--panel-border)" strokeWidth="1" />
+              <polygon points="50,30 80,45 75,70 50,85 25,70 20,45" fill="var(--accent-dim)" stroke="var(--accent)" strokeWidth="1.5" />
+            </svg>
+          </div>
+          <a href="#" className="text-xs text-accent text-center mt-4" style={{ display: 'block' }}>View full report →</a>
+        </div>
+
+        <div className="panel widget-replay">
+          <h3 className="font-bold text-sm mb-4">Replay Review</h3>
+          <div style={{ background: '#000', flex: 1, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="text-muted">▶ Video Player Placeholder</span>
+          </div>
+        </div>
+
+        <div className="panel widget-strategy">
+          <h3 className="font-bold text-sm mb-4">Strategy Board</h3>
+          <div style={{ background: 'var(--panel-border)', flex: 1, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="text-muted">Map & Tactics Placeholder</span>
+          </div>
+        </div>
+
+        <div className="panel widget-community">
+          <h3 className="font-bold text-sm mb-4">Community</h3>
+          <div className="text-sm text-muted">
+            <p className="mb-2"><strong>ACTIVE THREAD: #general</strong></p>
+            <p className="mb-2"><span className="text-accent">ClutchKid:</span> Great win last night team!</p>
+            <p><span className="text-accent">Ro:</span> Remember, communicate early.</p>
+          </div>
+          <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
+            <input type="text" placeholder="Message #general..." style={{ flex: 1, background: 'var(--panel-border)', border: 'none', borderRadius: 4, padding: '8px', color: 'var(--text)' }} />
+          </div>
+        </div>
+
+      </main>
+    </div>
   );
 }
 
-function Footer(): React.JSX.Element {
-  return (
-    <footer className="footer">
-      <div className="footer-left">
-        <span className="footer-mark">GP</span>
-        © {new Date().getFullYear()} APEX Business Systems LTD. Edmonton, AB.
-      </div>
-      <div className="footer-right">
-        <a href="#boundaries">Privacy</a>
-        <a href="#how">How it works</a>
-        <a href="#titles">Titles</a>
-      </div>
-    </footer>
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  const root = createRoot(rootElement);
+  root.render(
+    <React.StrictMode>
+      <DashboardApp />
+    </React.StrictMode>
   );
 }
-
-/* ── App ──────────────────────────────────────────────────────────── */
-
-function App(): React.JSX.Element {
-  return (
-    <>
-      <div className="grain" />
-      <div className="app">
-        <Nav />
-        <Hero />
-        <StatsBar />
-        <HowSection />
-        <BoundariesSection />
-        <TitlesSection />
-        <CtaSection />
-        <Footer />
-      </div>
-    </>
-  );
-}
-
-createRoot(document.getElementById('root') as HTMLElement).render(<App />);
