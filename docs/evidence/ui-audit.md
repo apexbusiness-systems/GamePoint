@@ -24,3 +24,12 @@
 - `node --test`: 11/11 green (state machine, blocking age gate, degrade/refusal/offline/unsupported states, opacity clamp, persistence fallback).
 - `tsc --noEmit` clean, `vite build` clean.
 - UNCERTAIN: not run — Tauri 2.x shell packaging (always-on-top frameless PiP window) requires the Windows release environment; frontend is host-agnostic and the shell wiring is enumerated in `docs/runbooks/wp5-bench.md` prerequisites.
+
+## Addendum 2026-07-08: Voice & Perception framework applied
+Principles from the APEX visual-communication framework, mapped to GamePoint in `docs/design/voice-and-perception.md` and enforced mechanically:
+- **3-second sequence:** HUD re-ordered to status → advice → adjustment; persona badge demoted to settings (identity metadata, not a glance-tier need); idle copy de-duplicated against the status word. Verified in the rendered DOM: `PERCEPTION_SEQUENCE_OK status(37) < advice(81) < settings(261); status="Watching"` (`scripts/perception-check.mjs`).
+- **Calm under pressure:** color law adopted — red belongs to the capture indicator alone; low confidence is now muted gray information, not an alarm; error/offline states keep diagnostic, unpressured copy.
+- **Voice lexicon:** banned list (magic/easy/cheap/playful/disruptive/effortless/instantly/guaranteed/unbeatable/"win more") enforced by `voice.test.mjs` across overlay, web, and consent copy; game vocabulary in test fixtures explicitly exempt.
+- **Memory encoding:** one metaphor — "The coach in your corner: it watches the fight, it never touches the controls." — placed verbatim at exactly the two category-formation moments (first-run consent, web landing hero), once per surface; the lint asserts both presence and single-use sharpness.
+- Web landing now mirrors the seeded registry truthfully (5 supported Wave-1 titles, Diablo IV "Paused — terms review", GTA VI "Registry only").
+- Screenshots refreshed; suite now 20 UI tests (11 state + 3 web + 3 voice + pluralization fixes), all green.

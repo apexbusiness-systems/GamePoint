@@ -90,6 +90,9 @@ input[type='range'] { flex: 1; accent-color: var(--accent); }
 .advice { font-size: 1.02rem; }
 .action { color: var(--accent); font-weight: 600; }
 
+.status { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+.metaphor { color: var(--text); font-weight: 600; border-left: 3px solid var(--accent); padding-left: var(--space-2); }
+
 .capture-indicator {
   width: 10px; height: 10px; border-radius: 50%;
   background: var(--text-muted);
@@ -123,9 +126,11 @@ input[type='range'] { flex: 1; accent-color: var(--accent); }
   color: var(--text-muted);
 }
 .chip-dot { width: 8px; height: 8px; border-radius: 50%; }
+/* Color law (docs/design/voice-and-perception.md §2): red belongs to the capture
+   indicator alone. Confidence is information, not alarm. */
 .conf-high { color: var(--ok); }    .conf-high .chip-dot { background: var(--ok); }
 .conf-medium { color: var(--warn); } .conf-medium .chip-dot { background: var(--warn); }
-.conf-low { color: var(--danger); }  .conf-low .chip-dot { background: var(--danger); }
+.conf-low { color: var(--text-muted); } .conf-low .chip-dot { background: var(--text-muted); }
 
 .settings summary { cursor: pointer; color: var(--text-muted); }
 .settings[open] summary { margin-bottom: var(--space-2); }

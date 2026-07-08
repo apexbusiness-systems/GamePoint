@@ -33,6 +33,10 @@ function ConsentScreen({ dispatch }: { dispatch: React.Dispatch<Action> }) {
   return (
     <section className="card flow" aria-labelledby="consent-title">
       <h1 id="consent-title">Before GamePoint can coach you</h1>
+      <p className="metaphor">
+        GamePoint is the coach in your corner: it watches the fight, it never touches the
+        controls.
+      </p>
       <ul className="plain">
         <li><strong>What is captured:</strong> your screen, only while capture is on, only when you press the assist hotkey.</li>
         <li><strong>What leaves this device:</strong> a single frame per assist, sent encrypted for analysis, processed in memory and discarded after the answer.</li>
@@ -87,11 +91,12 @@ function AdviceBody({ state }: { state: OverlayState }) {
   const { hud } = state;
   switch (hud.kind) {
     case 'idle':
+      // The status word already says Watching/Capture off — no redundancy here.
       return (
         <p className="muted">
           {state.captureActive
-            ? 'Watching. Press your assist hotkey at any decision point.'
-            : 'Capture is off. Nothing is being watched.'}
+            ? 'Press your assist hotkey at any decision point.'
+            : 'Nothing is being watched. Start capture when you are ready.'}
         </p>
       );
     case 'thinking':
@@ -141,22 +146,26 @@ function AdviceBody({ state }: { state: OverlayState }) {
   }
 }
 
+/** Tier-1 status word: absolute certainty of what the system is doing right now. */
+function statusWord(state: OverlayState): string {
+  if (state.hud.kind === 'offline') return 'Offline';
+  return state.captureActive ? 'Watching' : 'Capture off';
+}
+
 function Hud({ state, dispatch }: { state: OverlayState; dispatch: React.Dispatch<Action> }) {
   const advice = state.hud.kind === 'advice' ? state.hud.response : null;
   const tier = advice ? confidenceTier(advice.confidence) : null;
   return (
     <section className="card flow" aria-label="GamePoint coaching HUD">
+      {/* 3-second sequence, tier 1: system status — text + indicator, never color alone. */}
       <header className="hud-bar">
-        <span
-          className={`capture-indicator ${state.captureActive ? 'on' : ''}`}
-          role="status"
-          aria-label={state.captureActive ? 'Capture active' : 'Capture off'}
-          title={state.captureActive ? 'Capture active' : 'Capture off'}
-        />
-        <strong>GamePoint</strong>
-        {state.settings.playstyle && (
-          <span className="badge subtle">{personaLabel(state.settings.playstyle)}</span>
-        )}
+        <span className="status" role="status">
+          <span
+            className={`capture-indicator ${state.captureActive ? 'on' : ''}`}
+            aria-hidden="true"
+          />
+          {statusWord(state)}
+        </span>
         <span className="spacer" />
         <button
           className="ghost"
@@ -166,7 +175,7 @@ function Hud({ state, dispatch }: { state: OverlayState; dispatch: React.Dispatc
           {state.settings.muted ? 'Unmute' : 'Mute'}
         </button>
         <button className="ghost" onClick={() => dispatch({ type: 'capture/toggle' })}>
-          {state.captureActive ? 'Pause capture' : 'Start capture'}
+          {state.captureActive ? 'Pause' : 'Start capture'}
         </button>
       </header>
 
@@ -188,6 +197,11 @@ function Hud({ state, dispatch }: { state: OverlayState; dispatch: React.Dispatc
       <details className="settings">
         <summary>Session &amp; settings</summary>
         <div className="flow-tight">
+          {state.settings.playstyle && (
+            <p className="muted">
+              Coaching style: <span className="badge subtle">{personaLabel(state.settings.playstyle)}</span>
+            </p>
+          )}
           <p className="muted">
             This session: {state.session.adviceCount} tip{state.session.adviceCount === 1 ? '' : 's'} ·{' '}
             {state.session.verifiedCount} evidence-backed · {state.session.refusals} refused by

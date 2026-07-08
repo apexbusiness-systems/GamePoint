@@ -19,3 +19,7 @@ Capture remains disabled until the user passes the age gate required for the pro
 ## Unsupported Titles
 
 If a title is not runtime eligible, capture is paused and the app must explain: "GamePoint has not verified this title yet. Capture is paused for this game until support is cleared."
+
+## Voice
+
+The consent screen leads with the product's single metaphor, verbatim: "GamePoint is the coach in your corner: it watches the fight, it never touches the controls." Lexicon rules for all user-facing copy: docs/design/voice-and-perception.md.
