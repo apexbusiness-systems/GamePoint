@@ -1,0 +1,2 @@
+export type AssistBudget = { maxInputTokens: number; maxOutputTokens: number; maxImagePixels: number; maxRois: number; maxRetrievalChunks: number; maxLatencyMs: number; maxCostUsdMicros: number; escalationAllowed: boolean };
+export const defaultFixtureBudget: AssistBudget = { maxInputTokens: 1200, maxOutputTokens: 120, maxImagePixels: 786432, maxRois: 2, maxRetrievalChunks: 4, maxLatencyMs: 1500, maxCostUsdMicros: 500, escalationAllowed: false };
