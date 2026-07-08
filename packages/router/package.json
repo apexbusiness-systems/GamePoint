@@ -1,0 +1,1 @@
+{"name":"router","private":true,"version":"0.1.0","type":"module","scripts":{"lint":"tsc --noEmit","typecheck":"tsc --noEmit","test":"node --test src/*.test.mjs"}}
