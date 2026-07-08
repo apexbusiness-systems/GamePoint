@@ -10,9 +10,10 @@ test('web metadata declares canonical production domain', () => {
   assert.match(html, /<link rel="canonical" href="https:\/\/gamepointagent\.com" \/>/);
 });
 
-test('Cloudflare redirects canonicalize defensive domains', () => {
-  const redirects = readFileSync(resolve(root, 'apps/web/_redirects'), 'utf8');
+test('Worker canonicalizes defensive domains to gamepointagent.com', () => {
+  const worker = readFileSync(resolve(root, 'workers/web-assets.ts'), 'utf8');
+  assert.match(worker, /CANONICAL_HOST = 'gamepointagent\.com'/);
   for (const host of ['www.gamepointagent.com', 'game-point.icu', 'gamepointagent.ca', 'gamepointagent.icu', 'gamepointagent.info']) {
-    assert.match(redirects, new RegExp(`https://${host.replace('.', '\\.')}/\\* https://gamepointagent\\.com/:splat 301!`));
+    assert.ok(worker.includes(`'${host}',`), `missing redirect host ${host}`);
   }
 });
