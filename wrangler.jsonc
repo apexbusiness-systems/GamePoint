@@ -1,0 +1,13 @@
+// Cloudflare Workers Builds config for the public web control plane (ADR-005).
+// The Worker serves static assets only — it is never in the capture or assist path.
+// Dashboard build command must be:
+//   pnpm install --frozen-lockfile && pnpm --filter web build
+// Deploy command (default): npx wrangler deploy
+{
+  "name": "gamepoint",
+  "compatibility_date": "2026-07-01",
+  "assets": {
+    "directory": "./apps/web/dist",
+    "not_found_handling": "single-page-application"
+  }
+}

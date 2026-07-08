@@ -31,3 +31,13 @@ Cloudflare Pages reads `_headers` and `_redirects` from the deployment output di
 ## Rollback
 
 Rollback from the Cloudflare dashboard by selecting the prior successful Pages deployment and promoting it to production. CLI rollback automation is `UNCERTAIN` until account-level release permissions are verified.
+
+## Addendum 2026-07-08: Workers Builds ("gamepoint" service)
+The Cloudflare integration attached to PR checks is a **Workers** project, not Pages.
+Repo-side config now exists in root `wrangler.jsonc` (static assets from `apps/web/dist`,
+SPA fallback). For the deploy to go green, the Workers Builds dashboard settings must be:
+- Build command: `pnpm install --frozen-lockfile && pnpm --filter web build`
+- Deploy command: `npx wrangler deploy` (default)
+- Root directory: repository root.
+If the dashboard build command is unset, the assets directory will not exist and the
+deploy fails before wrangler runs — that is a dashboard setting, not a repo defect.
