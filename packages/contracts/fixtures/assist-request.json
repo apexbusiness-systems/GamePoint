@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "session_id": "3f1c9a4e-8b2d-4f6a-9c3e-1d5b7a9e2c4f",
+  "title_id": "7a2b4c6d-8e1f-4a3b-9c5d-2e4f6a8b1c3d",
+  "ts_client_monotonic_ms": 128734,
+  "frame_b64": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==",
+  "frame_width": 1920,
+  "frame_height": 1080,
+  "roi_descriptors": [
+    { "x": 0, "y": 980, "w": 1920, "h": 100, "kind": "hud" },
+    { "x": 1620, "y": 40, "w": 260, "h": 260, "kind": "minimap" }
+  ],
+  "audio_opus_bytes": null,
+  "audio_duration_ms": 0,
+  "hotkey_intent": "assist",
+  "local_observables": {
+    "process_name": "PathOfExile2.exe",
+    "window_title": "Path of Exile 2",
+    "title_slug_hint": "path-of-exile-2",
+    "vision_fallback": false
+  },
+  "blake3": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+}

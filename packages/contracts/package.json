@@ -1,1 +1,19 @@
-{"name":"contracts","private":true,"version":"0.1.0","type":"module","scripts":{"lint":"tsc --noEmit","typecheck":"tsc --noEmit","test":"node --test src/*.test.mjs"}}
+{
+  "name": "contracts",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test src/*.test.mjs"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
