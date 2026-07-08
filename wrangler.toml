@@ -1,0 +1,35 @@
+name = "gamepoint-web"
+main = "workers/web-assets.ts"
+compatibility_date = "2026-07-08"
+
+[build]
+command = "pnpm --filter web build"
+
+[assets]
+directory = "./apps/web/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[[routes]]
+pattern = "gamepointagent.com"
+custom_domain = true
+
+[[routes]]
+pattern = "www.gamepointagent.com"
+custom_domain = true
+
+[[routes]]
+pattern = "game-point.icu"
+custom_domain = true
+
+[[routes]]
+pattern = "gamepointagent.ca"
+custom_domain = true
+
+[[routes]]
+pattern = "gamepointagent.icu"
+custom_domain = true
+
+[[routes]]
+pattern = "gamepointagent.info"
+custom_domain = true
