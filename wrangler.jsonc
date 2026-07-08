@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gamepoint",
+  "compatibility_date": "2026-07-08",
+  // Static assets deployment — Cloudflare serves apps/web/dist as a static site.
+  // Cloudflare Pages-equivalent: no Worker script, assets only.
+  "assets": {
+    "directory": "./apps/web/dist",
+    "binding": "ASSETS",
+    // SPA fallback: serve index.html for all unmatched routes (replaces _redirects)
+    "not_found_handling": "single-page-application"
+  }
+}

@@ -1,21 +1,21 @@
-/* GamePoint overlay design tokens — dark glass HUD tuned for legibility over
-   gameplay: high contrast (WCAG AA on all text), compact, quiet motion. */
+/* GamePoint overlay design tokens — Cathedral-Grade brutalist HUD tuned for legibility over
+   gameplay: high contrast (WCAG AA on all text), compact, diegetic, sovereign presence. */
 :root {
-  --bg-glass: rgba(10, 15, 23, 0.88);
-  --bg-raised: rgba(21, 30, 44, 0.92);
-  --stroke: rgba(96, 129, 173, 0.35);
-  --text: #f0f6ff;        /* 15.2:1 on bg-glass */
-  --text-muted: #a8bcd6;  /* 7.4:1 */
-  --accent: #5eead4;
-  --warn: #fbbf24;
-  --danger: #f87171;
-  --ok: #4ade80;
-  --radius-lg: 16px;
-  --radius-pill: 999px;
+  --bg-glass: oklch(0.14 0 0 / 0.88);
+  --bg-raised: oklch(0.18 0 0 / 0.92);
+  --stroke: oklch(0.30 0 0);
+  --text: oklch(0.95 0 0);
+  --text-muted: oklch(0.60 0 0);
+  --accent: oklch(0.92 0.25 125);
+  --warn: oklch(0.70 0.15 70);
+  --danger: oklch(0.63 0.25 29);
+  --ok: oklch(0.85 0.15 140);
+  --radius-lg: 0px;
+  --radius-pill: 0px;
   --space-1: 6px;
   --space-2: 10px;
   --space-3: 16px;
-  --font: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
 }
 
 * { box-sizing: border-box; }
