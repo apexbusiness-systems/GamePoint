@@ -1,0 +1,60 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  governance-gates:
+    name: compliance + license gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compliance gate (banned API patterns, Contract §1.1)
+        run: bash governance/ci/compliance-gate.sh
+      - name: License gate self-test (OSRS fixture must be detected)
+        run: python3 governance/ci/license-gate.py --self-test
+      - name: License gate (repo scan)
+        run: python3 governance/ci/license-gate.py
+
+  gitleaks:
+    name: secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run gitleaks (pinned)
+        env:
+          GITLEAKS_VERSION: 8.24.3
+        run: |
+          curl -sSfL -o /tmp/gitleaks.tgz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf /tmp/gitleaks.tgz -C /tmp gitleaks
+          /tmp/gitleaks detect --source . --no-banner --redact --verbose
+
+  rust:
+    name: capture-win (clippy -D warnings, tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/capture-win
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - name: fmt
+        run: cargo fmt --check
+      - name: clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: test
+        run: cargo test --workspace
+
+  # WP-2+: typescript (eslint --max-warnings 0, tsc --noEmit), deno tests,
+  # pytest, pgTAP, and dependency audits are added by the WP that introduces
+  # each toolchain, per Contract §4 / WP-6.

@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/capture",
+    "crates/audio",
+    "crates/ringbuf-x",
+    "crates/dispatch",
+    "crates/svc",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+missing_docs = "deny"
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
