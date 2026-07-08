@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+coverage/
+
+*.tsbuildinfo
+
+# Review UI cannot render binary screenshot diffs; keep generated screenshots local unless release evidence storage supports them.
+docs/evidence/web-home-screenshot.png

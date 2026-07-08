@@ -1,0 +1,20 @@
+{
+  "name": "gamepoint",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.28.1",
+  "scripts": {
+    "lint": "bash governance/ci/compliance-gate.sh && python governance/ci/license-gate.py --check",
+    "typecheck": "tsc -b apps/web apps/overlay packages/contracts packages/router",
+    "test": "node --test packages/contracts/src/*.test.mjs packages/router/src/*.test.mjs"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest"
+  }
+}
