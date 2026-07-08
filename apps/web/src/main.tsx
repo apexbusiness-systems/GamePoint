@@ -98,7 +98,7 @@ function HeroPanel(): React.JSX.Element {
       <div className="hero-copy">
         <p>Welcome back, <strong>PlayerOne</strong></p>
         <h1>Coach in<br /><em>your</em> corner.</h1>
-        <span>Screen-only coaching. Real community. Real progress.</span>
+        <span>A coach in your corner: it watches the fight, it never touches the controls. Real community. Real progress.</span>
         <div className="hero-micro">
           <small>Overlay safe</small>
           <small>4 coaches online</small>
@@ -187,15 +187,18 @@ function OverlayPreview(): React.JSX.Element {
   return (
     <section className="panel overlay-preview" id="live-overlay">
       <div className="panel-head">
-        <h2>Live Overlay Preview</h2>
+        <h2 className="titlebar">Live Overlay Preview</h2>
         <span>⚙ ×</span>
       </div>
       <div className="game-window">
         <img className="overlay-source" src="/art/component-live-overlay.png" alt="" />
+        <div className="gp-chip"><b>G</b> GamePoint</div>
         <div className="score-strip" aria-label="Live scoreboard">
+          <span className="squad-strip"><img src="/art/portrait-ro.png" alt="" /><img src="/art/portrait-maya.png" alt="" /></span>
           <span>2</span>
           <strong>1:12</strong>
           <span>1</span>
+          <span className="squad-strip"><img src="/art/portrait-niko.png" alt="" /><img src="/art/portrait-june.png" alt="" /></span>
         </div>
         <div className="coach-callout callout-left">
           <img src="/art/portrait-ro.png" alt="" />
@@ -234,7 +237,7 @@ function ReplayAndStrategy(): React.JSX.Element {
       <section className="panel replay-panel" id="replay-review">
         <div className="panel-head">
           <div>
-            <h2>Replay Review</h2>
+            <h2 className="titlebar">Replay Review</h2>
             <p>vs. Night Owls · Map: Haven · May 12, 2025</p>
           </div>
           <span>↻ ›</span>
@@ -253,9 +256,11 @@ function ReplayAndStrategy(): React.JSX.Element {
             </div>
           </div>
           <div className="moments">
-            {['0:45 Early pick mid', '1:32 Rotation to A', '2:18 Post-plant setup', '3:05 Clutch attempt'].map((item) => (
-              <span key={item}>{item}</span>
+            <strong className="column-label">Key Moments</strong>
+            {[['0:45', 'Early pick mid'], ['1:32', 'Rotation to A'], ['2:18', 'Post-plant setup'], ['3:05', 'Clutch attempt']].map(([at, label]) => (
+              <span className="moment" key={at}><b>{at}</b>{label}</span>
             ))}
+            <strong className="column-label">Coach Notes</strong>
             <article className="coach-note">
               <img src="/art/portrait-ro.png" alt="" />
               <div><strong>Ro</strong><p>Great patience here.</p></div>
@@ -263,25 +268,35 @@ function ReplayAndStrategy(): React.JSX.Element {
             </article>
           </div>
         </div>
+        <div className="panel-status"><i /> Overlay Active <em>Connected</em></div>
       </section>
 
       <section className="panel strategy-panel">
         <div className="panel-head">
-          <h2>Strategy Board</h2>
-          <span>Default Strategy⌄</span>
+          <h2 className="titlebar">Strategy Board</h2>
+          <button className="dropdown" type="button">Default Strategy ⌄</button>
         </div>
         <div className="strategy-shell">
           <div className="tool-rail" aria-label="Strategy tools">
-            {['+', '⌗', '╱', '○', '□', '◎'].map((tool) => <button key={tool} type="button">{tool}</button>)}
+            {[['+', 'Add marker'], ['⌗', 'Grid snap'], ['╱', 'Draw line'], ['○', 'Draw circle'], ['□', 'Draw zone'], ['◎', 'Focus node']].map(([glyph, label]) => (
+              <button key={label} type="button" aria-label={label}>{glyph}</button>
+            ))}
           </div>
           <div className="board">
             <img src="/art/component-strategy-board.png" alt="" />
+            <svg className="routes" viewBox="0 0 300 150" preserveAspectRatio="none" aria-hidden="true">
+              <path className="arc arc-lime" d="M 62 38 C 120 6, 196 18, 236 58" />
+              <path className="arc arc-lime" d="M 150 84 C 110 112, 70 116, 42 96" />
+              <path className="arc arc-amber" d="M 232 66 C 200 104, 160 126, 116 128" />
+              <path className="arc arc-amber" d="M 68 46 C 96 78, 128 92, 146 82" />
+              <g className="marks">
+                <path d="M 30 62 l 10 10 M 40 62 l -10 10" />
+                <path d="M 250 108 l 10 10 M 260 108 l -10 10" />
+              </g>
+            </svg>
             <span className="node node-a">A</span>
             <span className="node node-b">B</span>
             <span className="node node-c">R</span>
-            <span className="route route-a" />
-            <span className="route route-b" />
-            <span className="route route-c" />
           </div>
           <div className="tool-list">
             <strong>Tools</strong>
@@ -291,12 +306,17 @@ function ReplayAndStrategy(): React.JSX.Element {
             <span>☑ Notes</span>
           </div>
         </div>
+        <div className="panel-status"><em>Next Advice Sync</em> · 00:07</div>
       </section>
 
       <section className="panel community-panel" id="community">
         <div className="panel-head">
-          <h2>Community</h2>
-          <span>Feed · LFG · Events</span>
+          <h2 className="titlebar">Community</h2>
+          <span className="tabs" role="tablist" aria-label="Community sections">
+            <b role="tab" aria-selected="true">Feed</b>
+            <em role="tab" aria-selected="false">LFG</em>
+            <em role="tab" aria-selected="false">Events</em>
+          </span>
         </div>
         <div className="community-shell">
           <div className="feed-column">
@@ -322,8 +342,17 @@ function ReplayAndStrategy(): React.JSX.Element {
           </div>
           <div className="thread-column">
             <strong>Active Thread <em>#general</em></strong>
-            {['NovaMind: Great win last night team!', 'PlayerPerfect: That retake on B was clean.', 'Ro: Remember: communicate early, win rounds.', 'You: Thanks for the calls, Ro.'].map((message) => (
-              <span key={message}>{message}<small>9m ago</small></span>
+            {[
+              ['NovaMind', 'Great win last night team!', '/art/portrait-june.png', '5m ago'],
+              ['PlayerPerfect', 'That retake on B was clean.', '/art/portrait-maya.png', '9m ago'],
+              ['Ro', 'Remember: communicate early, win rounds.', '/art/portrait-ro.png', '11m ago'],
+              ['You', 'Thanks for the calls, Ro.', '/art/portrait-niko.png', '12m ago'],
+            ].map(([author, text, avatar, when]) => (
+              <span className="thread-msg" key={text}>
+                <img src={avatar} alt="" />
+                <span><b>{author}</b>{text}</span>
+                <small>{when}</small>
+              </span>
             ))}
             <button type="button">Message #general... ▷</button>
           </div>

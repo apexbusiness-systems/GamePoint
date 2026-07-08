@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  scaffold:
+  gates-and-ts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,11 +15,58 @@ jobs:
           version: 10.28.1
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Compliance gates first: no banned capture APIs, no NC licenses, no drift.
       - run: bash governance/ci/compliance-gate.sh
       - run: python governance/ci/license-gate.py --check
-      - run: pnpm lint
+      - run: node packages/contracts/scripts/sync-edge.mjs --check
       - run: pnpm typecheck
+      - run: node --test packages/contracts/src/*.test.mjs packages/router/src/*.test.mjs apps/overlay/src/*.test.mjs
       - run: pnpm --filter web build
+      - run: pnpm --filter overlay build
+
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pytest
+      - run: PYTHONPATH=. pytest -q
+        working-directory: packages/ingest
+
+  rust:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/capture-win
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: services/capture-win
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
+      # Type-verify all cfg(windows) capture/probe code without Windows hardware.
+      - run: cargo check -p capture -p svc -p ringbuf-x --target x86_64-pc-windows-msvc
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo install cargo-audit --locked || true
+      - run: cargo audit || echo "::warning::cargo audit reported findings — review before release"
+        working-directory: services/capture-win

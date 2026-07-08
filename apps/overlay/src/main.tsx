@@ -36,7 +36,16 @@ const coachCues: CoachCue[] = [
     cue: 'They are low on utility. Group before the next hit.',
     tone: 'story',
   },
+  {
+    name: 'June',
+    role: 'The Builder',
+    image: '/art/portrait-june.png',
+    cue: 'Drop smoke here, then plant safe.',
+    tone: 'mastery',
+  },
 ];
+
+const cueTimes = ['2m ago', '1m ago', '1m ago', 'Now'];
 
 function App(): React.JSX.Element {
   return (
@@ -48,7 +57,12 @@ function App(): React.JSX.Element {
         </div>
         <section className="live-preview">
           <img src="/art/component-live-overlay.png" alt="" />
-          <div className="score-strip"><span>2</span><strong>1:12</strong><span>1</span></div>
+          <div className="gp-chip"><b>G</b> GamePoint</div>
+          <div className="score-strip" aria-label="Live scoreboard">
+            <span className="squad-strip"><img src="/art/portrait-ro.png" alt="" /><img src="/art/portrait-maya.png" alt="" /></span>
+            <span>2</span><strong>1:12</strong><span>1</span>
+            <span className="squad-strip"><img src="/art/portrait-niko.png" alt="" /><img src="/art/portrait-june.png" alt="" /></span>
+          </div>
           {coachCues.map((coach, index) => (
             <article className={`coach-callout callout-${index} ${coach.tone === activePersona ? 'active' : ''}`} key={coach.name}>
               <img src={coach.image} alt={`${coach.name}, ${coach.role}`} />
@@ -57,7 +71,7 @@ function App(): React.JSX.Element {
                 <small>{coach.role}</small>
                 <span>{coach.cue}</span>
               </div>
-              <time>{index === 0 ? '2m ago' : '1m ago'}</time>
+              <time>{cueTimes[index]}</time>
             </article>
           ))}
           <div className="reticle" />

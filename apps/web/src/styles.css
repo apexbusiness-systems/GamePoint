@@ -65,6 +65,11 @@ button {
   cursor: pointer;
 }
 
+:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
 .cockpit {
   display: grid;
   min-height: 100vh;
@@ -440,6 +445,92 @@ footer i,
   font-size: 0.72rem;
 }
 
+.panel-head h2.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.panel-head h2.titlebar::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 10px rgba(255, 66, 56, 0.7);
+}
+
+.panel-head .dropdown {
+  padding: 4px 9px;
+  border: 1px solid rgba(244, 241, 229, 0.14);
+  border-radius: 4px;
+  color: #d8d4bf;
+  background: rgba(3, 4, 2, 0.6);
+  font-size: 0.62rem;
+}
+
+.panel-head .dropdown:hover {
+  border-color: var(--line-hot);
+  color: var(--lime);
+}
+
+.panel-head .tabs {
+  display: inline-flex;
+  gap: 6px;
+  margin: 0;
+}
+
+.panel-head .tabs b,
+.panel-head .tabs em {
+  padding: 4px 9px;
+  border: 1px solid rgba(244, 241, 229, 0.1);
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-style: normal;
+  font-weight: 750;
+  color: var(--soft);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.panel-head .tabs b {
+  color: #091000;
+  border-color: transparent;
+  background: var(--lime);
+}
+
+.panel-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid rgba(244, 241, 229, 0.08);
+  border-radius: 4px;
+  color: #9e9b87;
+  background: rgba(4, 5, 2, 0.55);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.panel-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 10px var(--lime);
+}
+
+.panel-status em {
+  color: #d8d4bf;
+  font-style: normal;
+}
+
 .coach-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -689,13 +780,58 @@ footer i,
   transform: scale(1.02);
 }
 
+.gp-chip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid rgba(199, 255, 19, 0.28);
+  border-radius: 4px;
+  color: var(--lime);
+  background: rgba(5, 6, 3, 0.72);
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gp-chip b {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  place-items: center;
+  color: #061000;
+  background: var(--lime);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+  font-size: 0.56rem;
+}
+
+.squad-strip {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 4px;
+}
+
+.squad-strip img {
+  width: 13px;
+  height: 15px;
+  border-radius: 2px;
+  border: 1px solid rgba(199, 255, 19, 0.3);
+  object-fit: cover;
+}
+
 .score-strip {
   position: absolute;
   top: 10px;
   left: 50%;
   display: grid;
   min-width: 126px;
-  grid-template-columns: 34px 58px 34px;
+  grid-template-columns: 38px 30px 58px 30px 38px;
   align-items: center;
   border: 1px solid rgba(244, 241, 229, 0.16);
   border-radius: 4px;
@@ -925,12 +1061,33 @@ footer i,
   gap: 7px;
 }
 
-.moments span {
-  padding: 7px 8px;
+.column-label {
+  color: #f3f1e5;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.moments .moment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
   border: 1px solid rgba(244, 241, 229, 0.08);
   border-radius: 3px;
   color: #d8d4bf;
   font-size: 0.62rem;
+}
+
+.moments .moment b {
+  padding: 2px 6px;
+  border: 1px solid rgba(199, 255, 19, 0.3);
+  border-radius: 3px;
+  color: var(--lime);
+  background: rgba(199, 255, 19, 0.07);
+  font-size: 0.56rem;
+  font-weight: 850;
 }
 
 .coach-note {
@@ -1057,17 +1214,40 @@ footer i,
 .node-b { right: 20%; top: 42%; color: var(--amber); }
 .node-c { left: 55%; bottom: 18%; color: var(--amber); }
 
-.route {
+.routes {
   position: absolute;
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, var(--lime), transparent);
-  animation: routeFlow 2.8s linear infinite;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
-.route-a { left: 25%; top: 38%; width: 210px; transform: rotate(16deg); }
-.route-b { left: 35%; top: 62%; width: 170px; transform: rotate(-21deg); animation-delay: 500ms; }
-.route-c { left: 15%; top: 76%; width: 230px; transform: rotate(-8deg); animation-delay: 900ms; }
+.routes .arc {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 240;
+  animation: routeDraw 3.6s ease-in-out infinite;
+}
+
+.arc-lime {
+  stroke: var(--lime);
+  filter: drop-shadow(0 0 4px rgba(199, 255, 19, 0.55));
+}
+
+.arc-amber {
+  stroke: var(--amber);
+  filter: drop-shadow(0 0 4px rgba(255, 139, 23, 0.5));
+  animation-delay: 700ms;
+}
+
+.routes .marks path {
+  fill: none;
+  stroke: var(--lime);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
 
 .community-shell {
   display: grid;
@@ -1108,7 +1288,6 @@ footer i,
   color: #f6f2e5;
   font-size: 0.72rem;
 }
-
 .community-panel small,
 .community-panel article span {
   color: #8f8a77;
@@ -1144,17 +1323,33 @@ footer i,
   text-transform: none;
 }
 
-.thread-column > span {
+.thread-column > .thread-msg {
   display: grid;
-  grid-template-columns: 1fr 34px;
-  gap: 6px;
+  grid-template-columns: 20px 1fr 34px;
+  gap: 7px;
+  align-items: start;
   margin-bottom: 8px;
   color: #d8d4bf;
   font-size: 0.56rem;
   line-height: 1.25;
 }
 
-.thread-column > span small {
+.thread-msg img {
+  width: 20px;
+  height: 24px;
+  border-radius: 3px;
+  border: 1px solid rgba(199, 255, 19, 0.2);
+  object-fit: cover;
+}
+
+.thread-msg b {
+  display: block;
+  color: var(--lime);
+  font-size: 0.54rem;
+  text-transform: uppercase;
+}
+
+.thread-msg small {
   color: #77725f;
   text-align: right;
 }
@@ -1211,10 +1406,11 @@ footer span:last-child {
   50% { box-shadow: 0 0 28px rgba(199, 255, 19, 0.58); }
 }
 
-@keyframes routeFlow {
-  0% { opacity: 0; clip-path: inset(0 100% 0 0); }
-  35% { opacity: 1; }
-  100% { opacity: 0; clip-path: inset(0 0 0 100%); }
+@keyframes routeDraw {
+  0% { stroke-dashoffset: 240; opacity: 0; }
+  18% { opacity: 1; }
+  72% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
 }
 
 @media (max-width: 1180px) {
