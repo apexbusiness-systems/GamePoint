@@ -10,18 +10,13 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.110.1",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
     "@vitejs/plugin-react": "latest",
-    "contracts": "link:../../packages/contracts",
+    "vite": "latest",
+    "typescript": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "typescript": "latest",
-    "vite": "latest",
-    "zod": "^3.25.76"
+    "@types/react": "latest",
+    "@types/react-dom": "latest"
   },
-  "devDependencies": {
-    "@playwright/test": "^1.61.1"
-  }
+  "devDependencies": {}
 }

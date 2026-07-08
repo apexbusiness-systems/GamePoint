@@ -1,144 +1,307 @@
-/* GamePoint overlay design tokens — dark glass HUD tuned for legibility over
-   gameplay: high contrast (WCAG AA on all text), compact, quiet motion. */
 :root {
-  --bg-glass: rgba(10, 15, 23, 0.88);
-  --bg-raised: rgba(21, 30, 44, 0.92);
-  --stroke: rgba(96, 129, 173, 0.35);
-  --text: #f0f6ff;        /* 15.2:1 on bg-glass */
-  --text-muted: #a8bcd6;  /* 7.4:1 */
-  --accent: #5eead4;
-  --warn: #fbbf24;
-  --danger: #f87171;
-  --ok: #4ade80;
-  --radius-lg: 16px;
-  --radius-pill: 999px;
-  --space-1: 6px;
-  --space-2: 10px;
-  --space-3: 16px;
-  --font: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  color: #f5f2e7;
+  background: transparent;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --lime: #c8ff18;
+  --amber: #ff9c1b;
+  --panel: rgba(7, 8, 4, 0.86);
+  --line: rgba(200, 255, 24, 0.24);
+  --muted: #aaa88f;
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; background: transparent; }
-body { font-family: var(--font); color: var(--text); font-size: 14px; line-height: 1.45; }
 
-.overlay { width: min(400px, calc(100vw - 24px)); margin: 12px auto; }
-
-.card {
-  background: var(--bg-glass);
-  border: 1px solid var(--stroke);
-  border-radius: var(--radius-lg);
-  padding: var(--space-3);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(10px);
-}
-
-.flow > * + * { margin-top: var(--space-3); }
-.flow-tight > * + * { margin-top: var(--space-1); }
-
-h1 { font-size: 1.05rem; margin: 0; }
-p { margin: 0; }
-.muted { color: var(--text-muted); }
-ul.plain { margin: 0; padding-left: 1.1em; display: grid; gap: var(--space-1); color: var(--text-muted); }
-ul.plain strong { color: var(--text); }
-
-/* Controls — 32px min target height, visible focus, no color-only signals. */
-button {
-  font: inherit;
-  color: var(--text);
-  background: var(--bg-raised);
-  border: 1px solid var(--stroke);
-  border-radius: var(--radius-pill);
-  padding: 7px 14px;
-  min-height: 32px;
-  cursor: pointer;
-}
-button:hover { border-color: var(--accent); }
-button:focus-visible, input:focus-visible, summary:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-button.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #06281f;
-  font-weight: 700;
-  width: 100%;
-}
-button.primary:disabled { opacity: 0.45; cursor: not-allowed; }
-button.ghost { background: transparent; }
-
-.check, .row { display: flex; align-items: center; gap: var(--space-2); }
-.row.disabled { color: var(--text-muted); }
-input[type='checkbox'] { width: 18px; height: 18px; accent-color: var(--accent); }
-input[type='range'] { flex: 1; accent-color: var(--accent); }
-
-/* Persona picker */
-.persona-grid { display: grid; gap: var(--space-2); }
-.persona-option {
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
   display: grid;
-  gap: 2px;
-  text-align: left;
-  border-radius: var(--radius-lg);
-  padding: var(--space-2) var(--space-3);
+  place-items: center;
+  background:
+    linear-gradient(rgba(5, 6, 3, 0.26), rgba(5, 6, 3, 0.72)),
+    url('/art/game-scene.png') center / cover fixed;
 }
 
-/* HUD */
-.hud-bar { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
-.spacer { flex: 1; }
-.advice-region { min-height: 3.2em; }
-.advice { font-size: 1.02rem; }
-.action { color: var(--accent); font-weight: 600; }
+button { font: inherit; }
 
-.status { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
-.metaphor { color: var(--text); font-weight: 600; border-left: 3px solid var(--accent); padding-left: var(--space-2); }
-
-.capture-indicator {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--text-muted);
-  outline: 2px solid rgba(168, 188, 214, 0.3);
-}
-.capture-indicator.on {
-  background: var(--danger);
-  outline-color: rgba(248, 113, 113, 0.35);
-  animation: rec-pulse 2s ease-in-out infinite;
+.overlay-shell {
+  width: min(900px, calc(100vw - 28px));
+  filter: drop-shadow(0 26px 70px rgba(0, 0, 0, 0.6));
 }
 
-.badge {
-  display: inline-block;
-  border-radius: var(--radius-pill);
-  padding: 1px 8px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  border: 1px solid var(--stroke);
+.stage {
+  overflow: hidden;
+  border: 1px solid rgba(200, 255, 24, 0.36);
+  border-radius: 10px;
+  background:
+    linear-gradient(rgba(200, 255, 24, 0.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200, 255, 24, 0.03) 1px, transparent 1px),
+    rgba(5, 6, 3, 0.88);
+  background-size: 28px 28px;
+  box-shadow: 0 0 48px rgba(200, 255, 24, 0.16), inset 0 0 0 1px rgba(244, 241, 231, 0.06);
+  backdrop-filter: blur(18px);
 }
-.badge.warn { color: var(--warn); border-color: var(--warn); }
-.badge.policy { color: var(--accent); border-color: var(--accent); }
-.badge.subtle { color: var(--text-muted); }
 
-.chips { gap: var(--space-1); }
-.chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  border: 1px solid var(--stroke);
-  border-radius: var(--radius-pill);
-  padding: 3px 10px;
+.topbar {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(200, 255, 24, 0.16);
+}
+
+.topbar > strong {
+  color: #f9f8eb;
+  font-size: 0.86rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #e8f6b3;
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 18px var(--lime);
+}
+
+.live-preview {
+  position: relative;
+  height: 470px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(200, 255, 24, 0.16);
+  background: #050603;
+}
+
+.live-preview > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.88;
+  filter: saturate(1.04) brightness(0.82) contrast(1.06);
+}
+
+.score-strip {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  display: grid;
+  min-width: 150px;
+  grid-template-columns: 42px 66px 42px;
+  align-items: center;
+  border: 1px solid rgba(244, 241, 231, 0.16);
+  border-radius: 4px;
+  background: rgba(5, 6, 3, 0.76);
+  color: #f4f1e5;
   font-size: 0.8rem;
-  color: var(--text-muted);
+  text-align: center;
+  transform: translateX(-50%);
 }
-.chip-dot { width: 8px; height: 8px; border-radius: 50%; }
-/* Color law (docs/design/voice-and-perception.md §2): red belongs to the capture
-   indicator alone. Confidence is information, not alarm. */
-.conf-high { color: var(--ok); }    .conf-high .chip-dot { background: var(--ok); }
-.conf-medium { color: var(--warn); } .conf-medium .chip-dot { background: var(--warn); }
-.conf-low { color: var(--text-muted); } .conf-low .chip-dot { background: var(--text-muted); }
 
-.settings summary { cursor: pointer; color: var(--text-muted); }
-.settings[open] summary { margin-bottom: var(--space-2); }
+.score-strip strong {
+  padding: 5px 0;
+  background: rgba(244, 241, 231, 0.08);
+}
 
-.pulse { animation: soft-pulse 1.2s ease-in-out infinite; }
-@keyframes soft-pulse { 50% { opacity: 0.55; } }
-@keyframes rec-pulse { 50% { outline-offset: 3px; opacity: 0.75; } }
+.coach-callout {
+  position: absolute;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 8px;
+  width: 188px;
+  padding: 10px 10px 18px;
+  border: 1px solid rgba(200, 255, 24, 0.2);
+  border-radius: 6px;
+  background: rgba(7, 8, 4, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.coach-callout.active {
+  border-color: rgba(200, 255, 24, 0.5);
+  box-shadow: 0 0 24px rgba(200, 255, 24, 0.16);
+}
+
+.coach-callout img {
+  grid-row: span 3;
+  width: 34px;
+  height: 44px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.coach-callout strong,
+.coach-callout small,
+.coach-callout span {
+  display: block;
+}
+
+.coach-callout strong {
+  color: var(--lime);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+
+.coach-callout small {
+  color: #d8d4bf;
+  font-size: 0.56rem;
+}
+
+.coach-callout span {
+  margin-top: 5px;
+  color: #f1eddb;
+  font-size: 0.62rem;
+  line-height: 1.3;
+}
+
+.coach-callout time {
+  position: absolute;
+  right: 10px;
+  bottom: 6px;
+  color: #85806d;
+  font-size: 0.52rem;
+}
+
+.callout-0 { top: 90px; left: 28px; }
+.callout-1 { left: 28px; bottom: 90px; }
+.callout-2 { top: 96px; right: 28px; }
+
+.reticle {
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: 82px;
+  height: 82px;
+  border: 1px solid rgba(200, 255, 24, 0.72);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: reticlePulse 1.8s ease-in-out infinite;
+}
+
+.reticle::before,
+.reticle::after {
+  position: absolute;
+  content: "";
+  background: rgba(200, 255, 24, 0.72);
+}
+
+.reticle::before {
+  left: 50%;
+  top: -14px;
+  width: 1px;
+  height: calc(100% + 28px);
+}
+
+.reticle::after {
+  left: -14px;
+  top: 50%;
+  width: calc(100% + 28px);
+  height: 1px;
+}
+
+.overlay-hud {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  display: grid;
+  grid-template-columns: 82px 48px 82px;
+  align-items: center;
+  color: #d8d3be;
+  font-size: 0.72rem;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.overlay-hud b {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  justify-self: center;
+  color: #071100;
+  background: var(--lime);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.consent {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.34fr) 1fr;
+  gap: 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(200, 255, 24, 0.16);
+}
+
+.consent strong { color: #f9f8eb; }
+
+.consent span,
+.tactical-row span {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.tactical-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+}
+
+.tactical-row span,
+.tactical-row button {
+  min-height: 34px;
+  padding: 8px 11px;
+  border: 1px solid rgba(244, 241, 231, 0.12);
+  border-radius: 999px;
+  background: rgba(244, 241, 231, 0.045);
+}
+
+.tactical-row button {
+  margin-left: auto;
+  color: #080a04;
+  cursor: pointer;
+  border-color: transparent;
+  background: var(--lime);
+  font-weight: 900;
+}
+
+@keyframes reticlePulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(200, 255, 24, 0.25); }
+  50% { box-shadow: 0 0 34px rgba(200, 255, 24, 0.55); }
+}
+
+@media (max-width: 720px) {
+  body {
+    place-items: start center;
+    padding-top: 12px;
+  }
+
+  .live-preview { height: 430px; }
+  .coach-callout { width: 164px; }
+  .callout-0, .callout-1 { left: 14px; }
+  .callout-2 { right: 14px; }
+  .consent { grid-template-columns: 1fr; }
+  .tactical-row button { width: 100%; margin-left: 0; }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .pulse, .capture-indicator.on { animation: none; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
 }
