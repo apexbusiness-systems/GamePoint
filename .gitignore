@@ -7,3 +7,6 @@ dist/
 coverage/
 
 *.tsbuildinfo
+
+# Review UI cannot render binary screenshot diffs; keep generated screenshots local unless release evidence storage supports them.
+docs/evidence/web-home-screenshot.png
