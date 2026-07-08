@@ -29,3 +29,11 @@ YELLOW
 ## Blockers
 - NONE for local WP-0 scaffold.
 - Deployment and production release remain blocked until Supabase CLI/project, Cloudflare account/project, gitleaks, title research, and provider pricing are verified.
+
+## Re-run 2026-07-08 (production-build session, contract v1.1)
+- Node v22.22.2, pnpm 10.28.1, cargo 1.94.1, Python 3.11.15 (contract said 3.12 — audit A6), pytest available.
+- Supabase CLI: still absent → P1/P2/P3 remain YELLOW; all SQL + pgTAP delivered with runbook `docs/runbooks/supabase-deploy.md`.
+- Deno absent → Edge Function logic lives in node-tested `packages/*`; Deno files are thin adapters.
+- gitleaks absent → grep-based secret scan in compliance-gate.sh + `git grep` audit (output in wp6 evidence).
+- P5 now PASS: `governance/compliance-matrix.md` seeded with 16 grounded titles + logged UNCERTAIN gap (audit A3).
+- Lane: **YELLOW** — execute all WPs with local verification where runnable; deploy-gated items enumerated per §6.
