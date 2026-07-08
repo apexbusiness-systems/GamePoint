@@ -6,6 +6,11 @@
 {
   "name": "gamepoint",
   "main": "workers/web-assets.ts",
+  // Custom domains: created/attached automatically on deploy (zone must exist in the account).
+  "routes": [
+    { "pattern": "gamepointagent.com", "custom_domain": true },
+    { "pattern": "www.gamepointagent.com", "custom_domain": true }
+  ],
   "compatibility_date": "2026-07-08",
   // Self-contained deploy: wrangler runs this before bundling, so the assets
   // directory exists even if the dashboard build command is bare `wrangler deploy`.
