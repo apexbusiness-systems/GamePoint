@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
   const pf = preflight(req);
   if (pf) return pf;
   // A4: correlation id exists before any decision so every refusal is traceable.
-  let requestId = crypto.randomUUID();
+  let requestId: string = crypto.randomUUID();
   if (req.method !== 'POST') {
     return refuse(req, 405, 'METHOD_NOT_ALLOWED', 'method not allowed', requestId);
   }
@@ -227,11 +227,14 @@ Deno.serve(async (req) => {
     model: string,
     usage: Partial<Record<string, number>>,
   ) => {
-    const final = { ...response, latency_ms: Math.round(performance.now() - started) };
+    const final = {
+      ...response,
+      latency_ms: Math.round(performance.now() - started),
+      request_id: requestId, // A4: correlation survives body, row, broadcast, HUD
+    };
     await db.from('coaching_responses').insert({
       session_id: request.session_id,
       title_id: title.id,
-      request_id: requestId,
       ...final,
     });
     await telemetry(outcome, model, { ...usage, confidence: response.confidence });
@@ -287,7 +290,13 @@ Deno.serve(async (req) => {
     breaker.record(result.costUsdMicros);
 
     if (result.response === null) {
-      return await deliver(NO_ADVICE_THIS_FRAME, 'degraded', result.model, result);
+      // Pre-existing defect (caught by deno check): ModelResult is not a numeric
+      // record — pass the usage fields explicitly.
+      return await deliver(NO_ADVICE_THIS_FRAME, 'degraded', result.model, {
+        inputTokens: result.inputTokens,
+        outputTokens: result.outputTokens,
+        costUsdMicros: result.costUsdMicros,
+      });
     }
 
     // 8. Advantage Check post-filter — the second wall (§1.1.2).
@@ -300,6 +309,6 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error('assist_unhandled', { name: (err as Error).name }); // no content logged
     await telemetry('error', 'none');
-    return json(req, 200, NO_ADVICE_THIS_FRAME, { 'x-gp-request-id': requestId });
+    return json(req, 200, { ...NO_ADVICE_THIS_FRAME, request_id: requestId }, { 'x-gp-request-id': requestId });
   }
 });

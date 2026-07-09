@@ -29,6 +29,18 @@ jobs:
       - run: pnpm --filter web build
       - run: pnpm --filter overlay build
 
+  edge-typecheck:
+    # Edge functions were previously never type-verified (deno is not part of the
+    # pnpm toolchain); deno check caught real defects on 2026-07-09. Merge blocker.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check assist/index.ts ingest-webhook/index.ts retrieval-plan/index.ts
+        working-directory: supabase/functions
+
   ingest:
     runs-on: ubuntu-latest
     steps:
