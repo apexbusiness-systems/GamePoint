@@ -6,7 +6,8 @@
   "scripts": {
     "lint": "bash governance/ci/compliance-gate.sh && python governance/ci/license-gate.py --check",
     "typecheck": "tsc -b apps/web apps/overlay packages/contracts packages/router",
-    "test": "node --test packages/contracts/src/*.test.mjs packages/router/src/*.test.mjs"
+    "test": "node --test packages/contracts/src/*.test.mjs packages/router/src/*.test.mjs apps/overlay/src/*.test.mjs",
+    "sync:edge": "node packages/contracts/scripts/sync-edge.mjs"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "latest",

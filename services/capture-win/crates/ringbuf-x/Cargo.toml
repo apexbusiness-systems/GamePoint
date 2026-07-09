@@ -1,0 +1,8 @@
+[package]
+name = "ringbuf-x"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+ringbuf = "0.4"

@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = ["crates/ringbuf-x", "crates/capture", "crates/dispatch", "crates/svc"]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2021"
+license = "LicenseRef-Proprietary-APEX"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+blake3 = { version = "1", features = ["pure"] }
+thiserror = "2"
+tracing = "0.1"
