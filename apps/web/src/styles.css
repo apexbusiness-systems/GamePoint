@@ -1523,3 +1523,26 @@ footer span:last-child {
 .demo-chip { color: var(--amber, #ff9c1b); border: 1px solid rgba(255, 156, 27, 0.4); border-radius: 4px;
   padding: 2px 8px; font-size: 10px; letter-spacing: 0.08em; }
 .demo-surface { opacity: 0.98; }
+
+/* App-plane primary buttons: same CTA language as the cockpit hero */
+.view-stack button:not(.ghost-button):not(.choice),
+.auth-card button:not(.ghost-button) {
+  min-height: 38px;
+  padding: 0 17px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: #091000;
+  background: var(--lime);
+  font-size: 0.8rem;
+  font-weight: 850;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(199, 255, 19, 0.13);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+.view-stack button:not(.ghost-button):not(.choice):hover,
+.auth-card button:not(.ghost-button):hover {
+  border-color: rgba(199, 255, 19, 0.6);
+  box-shadow: 0 0 26px rgba(199, 255, 19, 0.24);
+  transform: translateY(-1px);
+}
+.view-stack button:disabled, .auth-card button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
