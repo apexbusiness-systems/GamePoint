@@ -34,7 +34,7 @@ function isExpectedNetworkError(text: string): boolean {
   );
 }
 
-function collectErrors(page: Page): { errors: string[] } {
+function collectErrors(page: Page): string[] {
   const errors: string[] = [];
   const onConsole = (msg: ConsoleMessage): void => {
     if (msg.type() === 'error' && !isExpectedNetworkError(msg.text())) {
@@ -69,7 +69,7 @@ test.describe('Landing page', () => {
     const errors = collectErrors(page);
     await page.goto('/');
     await expect(page.locator('h1').first()).toContainText('Coach in');
-    expect(errors.errors, 'unexpected console errors on landing').toHaveLength(0);
+    expect(errors, 'unexpected console errors on landing').toHaveLength(0);
   });
 
   test('sidebar renders all 8 nav items', async ({ page }) => {

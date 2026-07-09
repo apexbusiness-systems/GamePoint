@@ -15,8 +15,8 @@ export const supabaseConfigured: boolean = Boolean(SUPABASE_URL && SUPABASE_KEY)
 // Client is only functional when supabaseConfigured === true.
 // When unconfigured the placeholder domain causes all calls to fail safely at the network level.
 export const supabase = createClient(
-  SUPABASE_URL ?? 'https://unconfigured.invalid',
-  SUPABASE_KEY ?? 'unconfigured-key',
+  SUPABASE_URL || 'https://unconfigured.invalid',
+  SUPABASE_KEY || 'unconfigured-key',
 );
 
 export interface NavItem { glyph: string; label: string; path: string }
