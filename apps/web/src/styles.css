@@ -1710,7 +1710,16 @@ button.coach-tile.active { border-color: var(--lime, #c7ff13); box-shadow: 0 0 1
 .dashboard-showcase .cockpit {
   position: relative; /* Override fixed */
   min-height: 800px;
-  height: 80vh; 
+  /* Do not cap height (was: height: 80vh). This mockup renders the same live
+     DOM as the real dashboard -- Coach Squad, Live Match/Advice/Session/
+     Progress row, the demo bar, and the Replay/Strategy/Community row -- which
+     is far taller than 80vh. Combined with .dashboard-showcase's overflow:
+     hidden, the fixed height silently clipped everything past "Your Progress"
+     (verified: cockpit content extended to ~2309px while the clipped box
+     capped around 1862px) and squeezed the remaining grid rows into
+     overlapping positions instead of stacking cleanly. Letting height grow
+     naturally fixes both; overflow: hidden on the parent still gives the
+     rounded showcase corners without clipping real content. */
 }
 
 /* =========================================================
