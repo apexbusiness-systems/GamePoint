@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 import { RouteLink, Sidebar, navigate, useRoute } from './lib';
@@ -48,28 +48,6 @@ function CoachSquad(): React.JSX.Element {
   );
 }
 
-function HeroPanel(): React.JSX.Element {
-  return (
-    <section className="hero-panel" id="home">
-      <img src="/art/coach-table.png" alt="" />
-      <div className="hero-scrim" />
-      <div className="hero-copy">
-        <p><strong>GamePoint</strong></p>
-        <h1>Coach in<br /><em>your</em> corner.</h1>
-        <div className="hero-micro">
-          <small>Screen-only</small>
-          <small>No game injection</small>
-          <small>Consent-first</small>
-        </div>
-        <div className="hero-actions">
-          <button onClick={() => navigate('/app/overlay')} type="button">Go Live <b>⌁</b></button>
-          <button className="secondary" onClick={() => navigate('/app/sessions')} type="button">🗓 Session</button>
-        </div>
-      </div>
-      <div className="floating-status"><i /> Overlay preview <b>▥</b></div>
-    </section>
-  );
-}
 
 function LiveCards(): React.JSX.Element {
   return (
@@ -329,36 +307,77 @@ function DemoBar(): React.JSX.Element {
   );
 }
 
-function Landing(): React.JSX.Element {
+
+function MarketingHero(): React.JSX.Element {
   return (
-    <main className="cockpit">
-      <Sidebar footer={<SessionFooter />} />
-      <div className="workspace">
-        <div className="top-grid">
-          <HeroPanel />
-          <CoachSquad />
-        </div>
-        <LiveCards />
-        <DemoBar />
-        <div className="demo-surface" inert>
-          <OverlayPreview />
-          <ReplayAndStrategy />
-        </div>
-        <footer>
-          <span><i /> Overlay Active</span>
-          <span>Connected</span>
-          <span>No game injection · Not runtime supported until cleared</span>
-          <span>Next Advice Sync · 00:07</span>
-          <span>v1.2.0</span>
-        </footer>
+    <section className="marketing-hero">
+      <div className="marketing-copy">
+        <h1 className="animate-enter delay-1">The AI Coach That Watches Your Game, Not Your Screen.</h1>
+        <p className="animate-enter delay-2">Master your mechanics, positioning, and game sense with real-time tactical advice. Zero game injection. 100% safe.</p>
+        <button className="primary-cta animate-enter delay-3" onClick={() => navigate('/app')} type="button">Start Coaching Free</button>
       </div>
-    </main>
+    </section>
+  );
+}
+
+function DashboardMockup(): React.JSX.Element {
+  return (
+    <div className="dashboard-showcase animate-enter delay-4">
+      <div className="showcase-header">
+        <span className="dot" /><span className="dot" /><span className="dot" />
+      </div>
+      <main className="cockpit" inert>
+        <Sidebar footer={<SessionFooter />} />
+        <div className="workspace">
+          <div className="top-grid">
+            <CoachSquad />
+          </div>
+          <LiveCards />
+          <DemoBar />
+          <div className="demo-surface">
+            <OverlayPreview />
+            <ReplayAndStrategy />
+          </div>
+          <footer>
+            <span><i /> Overlay Active</span>
+            <span>Connected</span>
+            <span className="footer-links">
+              <a href="#">Screen-only</a> · <a href="#">No game injection</a> · <a href="#">Consent-first</a>
+            </span>
+            <span>Next Advice Sync · 00:07</span>
+            <span>v1.2.0</span>
+          </footer>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function MarketingLanding(): React.JSX.Element {
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  return (
+    <div className="marketing-page">
+      <header className="marketing-nav animate-enter">
+        <strong><b style={{ color: 'var(--lime)', marginRight: '8px'}}>G</b> GAMEPOINT</strong>
+        <button className="ghost-button" onClick={() => navigate('/app')} type="button">Sign In</button>
+      </header>
+      <MarketingHero />
+      <DashboardMockup />
+    </div>
   );
 }
 
 function Root(): React.JSX.Element {
   const path = useRoute();
-  return path === '/' || path === '' ? <Landing /> : <AppRoot />;
+  return path === '/' || path === '' ? <MarketingLanding /> : <AppRoot />;
 }
 
 createRoot(document.getElementById('root') as HTMLElement).render(<Root />);
