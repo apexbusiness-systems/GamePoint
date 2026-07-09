@@ -38,11 +38,14 @@ interface AdviceEventRow {
 }
 
 const MODES: CoachingMode[] = ['simple', 'guided', 'tactical', 'pro'];
+// Coach Squad is a brand layer over one coaching engine (one `coaching_mode` field) —
+// each display coach maps 1:1 to a backing mode. There is no coach_id/persona routing
+// and no multi-agent backend; selecting a coach just changes tone/explanation style.
 const COACHES = [
-  { name: 'Maya', role: 'The Anchor', image: '/art/portrait-maya.png', cue: 'Calm macro reads and tilt control.' },
-  { name: 'Ro', role: 'The Shotcaller', image: '/art/portrait-ro.png', cue: 'Decisive mid-round calls.' },
-  { name: 'Niko', role: 'The Analyst', image: '/art/portrait-niko.png', cue: 'Economy and pattern analysis.' },
-  { name: 'June', role: 'The Builder', image: '/art/portrait-june.png', cue: 'Long-term skill construction.' },
+  { name: 'Maya', role: 'The Anchor', image: '/art/portrait-maya.png', cue: 'Calm reads and tilt control.', mode: 'simple' as CoachingMode },
+  { name: 'Ro', role: 'The Shotcaller', image: '/art/portrait-ro.png', cue: 'Decisive calls when it matters.', mode: 'guided' as CoachingMode },
+  { name: 'Niko', role: 'The Analyst', image: '/art/portrait-niko.png', cue: 'Patterns and matchup analysis.', mode: 'tactical' as CoachingMode },
+  { name: 'June', role: 'The Builder', image: '/art/portrait-june.png', cue: 'Long-term skill construction.', mode: 'pro' as CoachingMode },
 ] as const;
 
 export function useSession(): Session | null | undefined {
@@ -283,30 +286,32 @@ function Coaches(props: { profile: Profile; onProfile: (p: Profile) => void }): 
     if (err) setError(err.message); else props.onProfile(data as Profile);
     setBusy(null);
   };
+  const active = COACHES.find((c) => c.mode === props.profile.coaching_mode);
   return (
     <div className="view-stack">
       <section className="panel">
         <div className="panel-head"><h2>Coach Squad</h2></div>
+        <p className="muted">Coach Squad changes tone and explanation style. It does not run four separate agents — one coaching engine, four ways of talking to you. Pick the one that fits.</p>
         <div className="coach-row">
           {COACHES.map((c) => (
-            <figure className="coach-tile" key={c.name}>
+            <button
+              aria-pressed={props.profile.coaching_mode === c.mode}
+              className={props.profile.coaching_mode === c.mode ? 'coach-tile active' : 'coach-tile'}
+              disabled={busy !== null}
+              key={c.name}
+              onClick={() => { void setMode(c.mode); }}
+              type="button"
+            >
               <img alt={`${c.name}, ${c.role}`} src={c.image} />
-              <figcaption><strong>{c.name}</strong><span>{c.role}</span><small>{c.cue}</small></figcaption>
-            </figure>
-          ))}
-        </div>
-        <p className="muted">Coach voices ship with the desktop overlay. Your coaching mode shapes how they talk to you.</p>
-      </section>
-      <section className="panel">
-        <div className="panel-head"><h2>Coaching mode</h2></div>
-        <div className="choice-row">
-          {MODES.map((m) => (
-            <button aria-pressed={props.profile.coaching_mode === m} className={props.profile.coaching_mode === m ? 'choice active' : 'choice'} disabled={busy !== null} key={m} onClick={() => { void setMode(m); }} type="button">
-              {busy === m ? '…' : m}
+              <span className="coach-caption"><strong>{c.name}</strong><span>{c.role}</span><small>{busy === c.mode ? 'Saving…' : c.cue}</small></span>
             </button>
           ))}
         </div>
         {error ? <p className="form-error" role="alert">{error}</p> : null}
+      </section>
+      <section className="panel">
+        <div className="panel-head"><h2>Active coaching mode</h2></div>
+        <p><strong>{active ? `${active.name} — ${active.role}` : 'Custom'}</strong> · <code>{props.profile.coaching_mode}</code></p>
       </section>
     </div>
   );

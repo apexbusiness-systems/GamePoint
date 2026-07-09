@@ -68,7 +68,7 @@ test.describe('Landing page', () => {
   test('h1 is visible and contains expected copy', async ({ page }) => {
     const errors = collectErrors(page);
     await page.goto('/');
-    await expect(page.locator('h1').first()).toContainText('Coach in');
+    await expect(page.locator('h1').first()).toContainText('AI Coach');
     expect(errors, 'unexpected console errors on landing').toHaveLength(0);
   });
 
@@ -120,12 +120,15 @@ test.describe('Sidebar navigation', () => {
 
 // ─── landing CTAs ────────────────────────────────────────────────────────────
 
+// Matches the actual buttons rendered by LiveCards in apps/web/src/main.tsx as of the
+// "minimalist text reduction" / "elevate UI/UX to premium standard" redesign. The
+// landing page no longer has separate "Go Live" / "Schedule a Session" primary CTAs
+// (those were consolidated into these three panel-level buttons) — do not restore the
+// old labels here without also restoring them in the app; the app copy is intentional.
 const CTAS: Array<{ buttonText: string; expectedPath: string; desc: string }> = [
-  { buttonText: 'Go Live', expectedPath: '/app/overlay', desc: 'overlay gate or auth' },
-  { buttonText: 'Schedule a Session', expectedPath: '/app/sessions', desc: 'sessions gate or auth' },
   { buttonText: 'View Overlay', expectedPath: '/app/overlay', desc: 'overlay gate or auth' },
-  { buttonText: 'Join Session', expectedPath: '/app/sessions', desc: 'sessions gate or auth' },
-  { buttonText: 'View full report', expectedPath: '/app/insights', desc: 'insights gate or auth' },
+  { buttonText: 'Join', expectedPath: '/app/sessions', desc: 'sessions gate or auth' },
+  { buttonText: 'Report', expectedPath: '/app/insights', desc: 'insights gate or auth' },
 ];
 
 test.describe('Landing CTAs', () => {

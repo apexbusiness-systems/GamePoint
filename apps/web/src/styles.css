@@ -1401,12 +1401,11 @@ footer span:last-child {
   border-right: 0;
 }
 
-.footer-links a {
+.footer-links span {
   color: #9e9b87;
-  text-decoration: none;
   transition: color 150ms ease;
 }
-.footer-links a:hover {
+.footer-links span:hover {
   color: var(--lime);
 }
 
@@ -1547,8 +1546,13 @@ footer span:last-child {
 .gate-panel ul { color: var(--muted, #a8a68f); font-size: 13px; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
 .coach-tile { margin: 0; display: flex; flex-direction: column; gap: 4px; width: 132px; }
 .coach-tile img { width: 100%; border-radius: 6px; border: 1px solid rgba(199, 255, 19, 0.18); }
-.coach-tile figcaption { display: flex; flex-direction: column; font-size: 12px; }
+.coach-tile figcaption, .coach-tile .coach-caption { display: flex; flex-direction: column; font-size: 12px; }
 .coach-tile small { color: var(--muted, #a8a68f); }
+/* Interactive coach-tile variant (Settings/Coaches page): cards select coaching_mode directly. */
+button.coach-tile { background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 6px; cursor: pointer; text-align: left; }
+button.coach-tile:hover:not(:disabled) { border-color: rgba(199, 255, 19, 0.35); }
+button.coach-tile:disabled { cursor: default; opacity: 0.7; }
+button.coach-tile.active { border-color: var(--lime, #c7ff13); box-shadow: 0 0 12px rgba(199, 255, 19, 0.15) inset; }
 .player-card-link { text-decoration: none; color: inherit; }
 .player-card-link:hover strong { color: var(--lime, #c7ff13); }
 /* Demo plane: honest preview marking; inert content is non-interactive by the attribute itself */
