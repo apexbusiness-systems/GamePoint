@@ -31,7 +31,6 @@ function CoachSquad(): React.JSX.Element {
       <div className="panel-head">
         <div>
           <h2>Coach Squad</h2>
-          <p>Your crew. Your edge.</p>
         </div>
       </div>
       <div className="coach-row">
@@ -44,7 +43,7 @@ function CoachSquad(): React.JSX.Element {
           </article>
         ))}
       </div>
-      <button className="ghost-button" onClick={() => navigate('/app/coaches')} type="button">View Coach Squad →</button>
+      <button className="ghost-button" onClick={() => navigate('/app/coaches')} type="button">All Coaches →</button>
     </section>
   );
 }
@@ -55,9 +54,8 @@ function HeroPanel(): React.JSX.Element {
       <img src="/art/coach-table.png" alt="" />
       <div className="hero-scrim" />
       <div className="hero-copy">
-        <p><strong>GamePoint</strong> · AI game coaching</p>
+        <p><strong>GamePoint</strong></p>
         <h1>Coach in<br /><em>your</em> corner.</h1>
-        <span>A coach in your corner: it watches the fight, it never touches the controls. Real community. Real progress.</span>
         <div className="hero-micro">
           <small>Screen-only</small>
           <small>No game injection</small>
@@ -65,7 +63,7 @@ function HeroPanel(): React.JSX.Element {
         </div>
         <div className="hero-actions">
           <button onClick={() => navigate('/app/overlay')} type="button">Go Live <b>⌁</b></button>
-          <button className="secondary" onClick={() => navigate('/app/sessions')} type="button">▣ Schedule a Session</button>
+          <button className="secondary" onClick={() => navigate('/app/sessions')} type="button">🗓 Session</button>
         </div>
       </div>
       <div className="floating-status"><i /> Overlay preview <b>▥</b></div>
@@ -122,7 +120,7 @@ function LiveCards(): React.JSX.Element {
           </div>
           <img src="/art/portrait-niko.png" alt="" />
         </div>
-        <button className="ghost-button" onClick={() => navigate('/app/sessions')} type="button">Join Session</button>
+        <button className="ghost-button" onClick={() => navigate('/app/sessions')} type="button">Join ↗</button>
       </section>
 
       <section className="panel progress-panel">
@@ -136,7 +134,7 @@ function LiveCards(): React.JSX.Element {
           <span>Positioning<br /><b>78</b></span>
           <div className="radar-shape" />
         </div>
-        <button className="ghost-button" onClick={() => navigate('/app/insights')} type="button">View full report ↗</button>
+        <button className="ghost-button" onClick={() => navigate('/app/insights')} type="button">Report ↗</button>
       </section>
     </div>
   );
@@ -197,7 +195,7 @@ function ReplayAndStrategy(): React.JSX.Element {
         <div className="panel-head">
           <div>
             <h2 className="titlebar">Replay Review</h2>
-            <p>vs. Night Owls · Map: Haven · May 12, 2025</p>
+            <p>Haven · May 12</p>
           </div>
           <span>↻ ›</span>
         </div>
@@ -258,8 +256,6 @@ function ReplayAndStrategy(): React.JSX.Element {
             <span className="node node-c">R</span>
           </div>
           <div className="tool-list">
-            <strong>Tools</strong>
-            {['Arrow', 'Circle', 'Line', 'Zone', 'Text', 'Clear'].map((tool) => <span key={tool}>▸ {tool}</span>)}
             <strong>Layers</strong>
             <span>☑ Routes</span>
             <span>☑ Notes</span>
@@ -284,7 +280,7 @@ function ReplayAndStrategy(): React.JSX.Element {
               <img src="/art/portrait-june.png" alt="" />
               <div>
                 <strong>ClutchKid</strong>
-                <small>Posted a VOD review · 1h ago</small>
+                <small>1h ago</small>
                 <p>Check out my latest review. Any tips on mid control?</p>
                 <span>♡ 12   ↻ 5</span>
               </div>
@@ -293,7 +289,7 @@ function ReplayAndStrategy(): React.JSX.Element {
               <img src="/art/portrait-maya.png" alt="" />
               <div>
                 <strong>StrategyLab</strong>
-                <small>Posted a strategy · 3h ago</small>
+                <small>3h ago</small>
                 <p>New default execute for Bind. Works great post-patch.</p>
                 <span>♡ 18   ↻ 7</span>
               </div>
@@ -313,7 +309,7 @@ function ReplayAndStrategy(): React.JSX.Element {
                 <small>{when}</small>
               </span>
             ))}
-            <button type="button">Message #general... ▷</button>
+            <button type="button">Message ▷</button>
           </div>
         </div>
       </section>
