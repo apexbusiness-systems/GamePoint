@@ -22,9 +22,18 @@ export function preflight(req: Request): Response | null {
   return null;
 }
 
-export function json(req: Request, status: number, body: unknown): Response {
+export function json(
+  req: Request,
+  status: number,
+  body: unknown,
+  extraHeaders: Record<string, string> = {},
+): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'content-type': 'application/json', ...corsHeaders(req.headers.get('origin')) },
+    headers: {
+      'content-type': 'application/json',
+      ...corsHeaders(req.headers.get('origin')),
+      ...extraHeaders,
+    },
   });
 }

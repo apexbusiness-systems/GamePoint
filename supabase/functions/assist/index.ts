@@ -7,6 +7,7 @@ import {
   AssistRequest,
   CoachingResponse,
   NO_ADVICE_THIS_FRAME,
+  type AssistErrorCode,
 } from '../_shared/contracts.ts';
 import {
   buildPrompt,
@@ -16,6 +17,23 @@ import {
   type ModelAliases,
 } from '../_shared/router.ts';
 import { preflight, json } from '../_shared/cors.ts';
+
+// A4 error taxonomy: every non-200 carries a deterministic code + request_id.
+// The human-readable `error` field is preserved for pre-taxonomy clients.
+function refuse(
+  req: Request,
+  status: number,
+  code: AssistErrorCode,
+  message: string,
+  requestId: string,
+): Response {
+  return json(
+    req,
+    status,
+    { error_code: code, error: message, request_id: requestId },
+    { 'x-gp-request-id': requestId },
+  );
+}
 
 const aliases: ModelAliases = {
   primary: Deno.env.get('VISION_MODEL_PRIMARY') ?? 'gpt-5-nano',
@@ -119,7 +137,11 @@ async function embedQuery(text: string): Promise<number[] | null> {
 Deno.serve(async (req) => {
   const pf = preflight(req);
   if (pf) return pf;
-  if (req.method !== 'POST') return json(req, 405, { error: 'method not allowed' });
+  // A4: correlation id exists before any decision so every refusal is traceable.
+  let requestId = crypto.randomUUID();
+  if (req.method !== 'POST') {
+    return refuse(req, 405, 'METHOD_NOT_ALLOWED', 'method not allowed', requestId);
+  }
   const started = performance.now();
 
   // 1. Auth: user JWT required.
@@ -128,12 +150,19 @@ Deno.serve(async (req) => {
   const jwt = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
   const db = createClient(supabaseUrl, serviceKey);
   const { data: userData, error: authError } = await db.auth.getUser(jwt);
-  if (authError || !userData?.user) return json(req, 401, { error: 'authentication required' });
+  if (authError || !userData?.user) {
+    return refuse(req, 401, 'AUTH_REQUIRED', 'authentication required', requestId);
+  }
 
   // 2. Validate payload at the boundary.
   const parsed = AssistRequest.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return json(req, 400, { error: 'invalid assist request' });
+  if (!parsed.success) {
+    return refuse(req, 400, 'INVALID_REQUEST', 'invalid assist request', requestId);
+  }
   const request = parsed.data;
+  // Client-supplied correlation id wins so the desktop service can trace end to end.
+  requestId = request.request_id ?? requestId;
+  const clientVersion = request.client_version ?? null;
 
   // 3. Session ownership + title gate (compliance is a query, not a convention).
   const { data: session } = await db
@@ -142,7 +171,21 @@ Deno.serve(async (req) => {
     .eq('id', request.session_id)
     .single();
   if (!session || session.user_id !== userData.user.id) {
-    return json(req, 403, { error: 'session not owned by caller' });
+    return refuse(req, 403, 'SESSION_NOT_OWNED', 'session not owned by caller', requestId);
+  }
+
+  // A4 rate limit: sliding 60s window per user across all their sessions.
+  // Cheap relational count — no new infrastructure, no new dependency.
+  const ratePerMin = Number(Deno.env.get('ASSIST_RATE_LIMIT_PER_MIN') ?? 12);
+  const { count: recentCount } = await db
+    .from('advice_events')
+    .select('id, sessions!inner(user_id)', { count: 'exact', head: true })
+    .eq('sessions.user_id', userData.user.id)
+    .gte('created_at', new Date(Date.now() - 60_000).toISOString());
+  if ((recentCount ?? 0) >= ratePerMin) {
+    // No telemetry row on purpose: rate-limited rejects must not grow the very
+    // table the limiter counts, or a saturated user could never recover.
+    return refuse(req, 429, 'RATE_LIMITED', 'assist rate limit reached — try again shortly', requestId);
   }
   const { data: title } = await db
     .from('titles')
@@ -154,6 +197,8 @@ Deno.serve(async (req) => {
     await db.from('advice_events').insert({
       session_id: request.session_id,
       title_id: title?.id ?? null,
+      request_id: requestId,
+      client_version: clientVersion,
       mode: request.hotkey_intent,
       model,
       latency_ms: Math.round(performance.now() - started),
@@ -167,10 +212,13 @@ Deno.serve(async (req) => {
 
   if (!title || !title.runtime_eligible || title.compliance_status !== 'cleared') {
     await telemetry('error', 'none');
-    return json(req, 403, {
-      error: 'title not runtime-eligible',
-      detail: 'This title has not passed the GamePoint compliance gate for live coaching.',
-    });
+    return refuse(
+      req,
+      403,
+      'TITLE_NOT_ELIGIBLE',
+      'This title has not passed the GamePoint compliance gate for live coaching.',
+      requestId,
+    );
   }
 
   const deliver = async (
@@ -183,10 +231,11 @@ Deno.serve(async (req) => {
     await db.from('coaching_responses').insert({
       session_id: request.session_id,
       title_id: title.id,
+      request_id: requestId,
       ...final,
     });
     await telemetry(outcome, model, { ...usage, confidence: response.confidence });
-    return json(req, 200, final);
+    return json(req, 200, final, { 'x-gp-request-id': requestId });
   };
 
   try {
@@ -251,6 +300,6 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error('assist_unhandled', { name: (err as Error).name }); // no content logged
     await telemetry('error', 'none');
-    return json(req, 200, NO_ADVICE_THIS_FRAME);
+    return json(req, 200, NO_ADVICE_THIS_FRAME, { 'x-gp-request-id': requestId });
   }
 });
