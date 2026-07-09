@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
+  CoachingResponse,
   SessionConfig,
   encodeSessionConfig,
   decodeSessionConfig,
@@ -67,16 +68,22 @@ test('publishable keys and anon JWTs pass the secret wall', () => {
   assert.equal(looksLikeServerSecret(`eyJhbGciOiJIUzI1NiJ9.${anon}.sig`), false);
 });
 
-test('AssistRequest accepts optional request correlation fields (A4, backward compatible)', () => {
+test('AssistRequest correlation fields are optional (A4, backward compatible)', () => {
   const base = fixture('assist-request.json');
-  assert.equal(AssistRequest.safeParse(base).success, true); // pre-A4 clients stay valid
-  const withCorrelation = {
-    ...base,
-    request_id: '0b6f1a2c-3d4e-4f5a-8b6c-7d8e9f0a1b2c',
-    client_version: 'overlay-0.1.0',
-  };
-  assert.equal(AssistRequest.safeParse(withCorrelation).success, true);
+  assert.equal(AssistRequest.safeParse(base).success, true); // golden fixture carries them
+  const legacy = { ...base };
+  delete legacy.request_id;
+  delete legacy.client_version;
+  assert.equal(AssistRequest.safeParse(legacy).success, true); // pre-A4 clients stay valid
   assert.equal(AssistRequest.safeParse({ ...base, request_id: 'not-a-uuid' }).success, false);
+});
+
+test('CoachingResponse retains request_id through parse (broadcast -> HUD)', () => {
+  const parsed = CoachingResponse.parse(fixture('coaching-response.json'));
+  assert.equal(parsed.request_id, '4d5e6f7a-8b9c-4d1e-9f2a-3b4c5d6e7f8a');
+  const legacy = fixture('coaching-response.json');
+  delete legacy.request_id;
+  assert.equal(CoachingResponse.safeParse(legacy).success, true); // pre-A4 rows stay valid
 });
 
 test('AssistErrorBody carries a deterministic code and request id', () => {

@@ -149,6 +149,7 @@ function AdviceBody({ state }: { state: OverlayState }) {
 
 /** Tier-1 status word: absolute certainty of what the system is doing right now. */
 function statusWord(state: OverlayState): string {
+  if (state.captureLocked) return 'Capture locked';
   if (state.hud.kind === 'offline') return 'Offline';
   return state.captureActive ? 'Watching' : 'Capture off';
 }
@@ -175,8 +176,13 @@ function Hud({ state, dispatch }: { state: OverlayState; dispatch: React.Dispatc
         >
           {state.settings.muted ? 'Unmute' : 'Mute'}
         </button>
-        <button className="ghost" onClick={() => dispatch({ type: 'capture/toggle' })}>
-          {state.captureActive ? 'Pause' : 'Start capture'}
+        <button
+          className="ghost"
+          disabled={state.captureLocked}
+          title={state.captureLocked ? 'Session config was refused — relaunch from the web app.' : undefined}
+          onClick={() => dispatch({ type: 'capture/toggle' })}
+        >
+          {state.captureLocked ? 'Capture locked' : state.captureActive ? 'Pause' : 'Start capture'}
         </button>
       </header>
 
@@ -192,6 +198,11 @@ function Hud({ state, dispatch }: { state: OverlayState; dispatch: React.Dispatc
           <span className="chip">
             Evidence: {advice.evidence_ids.length > 0 ? `${advice.evidence_ids.length} source${advice.evidence_ids.length === 1 ? '' : 's'}` : 'none'}
           </span>
+          {advice.request_id && (
+            <span className="chip" title={advice.request_id}>
+              req {advice.request_id.slice(0, 8)}
+            </span>
+          )}
         </footer>
       )}
 
@@ -244,6 +255,12 @@ export default function App() {
     () => (binding.mode === 'configured' ? binding.config.session_id : crypto.randomUUID()),
     [binding],
   );
+
+  // A3: an invalid config locks capture structurally (reducer-level), so the HUD can
+  // never report Watching under a refused config — not just a blocked subscription.
+  useEffect(() => {
+    if (binding.mode === 'invalid') dispatch({ type: 'binding/refused' });
+  }, [binding.mode, dispatch]);
 
   // Deliver responses only while capturing on the HUD screen. An invalid config
   // never degrades into fixture mode — capture stays off until it is corrected.

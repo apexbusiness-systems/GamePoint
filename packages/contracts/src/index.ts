@@ -58,6 +58,9 @@ export const CoachingResponse = z
     source_tier: SourceTier,
     not_verified: z.boolean(),
     latency_ms: z.number().int().nonnegative().optional(),
+    // A4: correlation id survives the full loop — response body, coaching_responses
+    // row, Realtime broadcast, HUD state. Optional: pre-A4 rows stay valid.
+    request_id: uuid.optional(),
   })
   // Truth bar (§1.3): a claim carries evidence or is explicitly not verified.
   .refine((r) => r.evidence_ids.length > 0 || r.not_verified, {
