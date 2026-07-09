@@ -11,6 +11,7 @@ import {
   splitNotVerified,
 } from './state';
 import { demoScript, FixtureResponseSource, makeResponseSource } from './realtime';
+import { resolveBinding } from './config';
 
 const STORAGE_KEY = 'gamepoint.overlay.v1';
 
@@ -229,17 +230,31 @@ function Hud({ state, dispatch }: { state: OverlayState; dispatch: React.Dispatc
 
 export default function App() {
   const [state, dispatch] = usePersistedReducer();
-  const sourceRef = useRef(makeResponseSource(import.meta.env));
-  const sessionId = useMemo(() => crypto.randomUUID(), []);
+  // A3: bind to the session config handed off by the web app (gpc URL param).
+  const binding = useMemo(() => resolveBinding(window.location.search), []);
+  const sourceRef = useRef(
+    makeResponseSource(
+      import.meta.env,
+      binding.mode === 'configured'
+        ? { url: binding.config.supabase_url, key: binding.config.publishable_key }
+        : undefined,
+    ),
+  );
+  const sessionId = useMemo(
+    () => (binding.mode === 'configured' ? binding.config.session_id : crypto.randomUUID()),
+    [binding],
+  );
 
-  // Deliver responses only while capturing on the HUD screen.
+  // Deliver responses only while capturing on the HUD screen. An invalid config
+  // never degrades into fixture mode — capture stays off until it is corrected.
   useEffect(() => {
+    if (binding.mode === 'invalid') return;
     if (state.screen !== 'hud' || !state.captureActive) return;
     const unsubscribe = sourceRef.current.subscribe(sessionId, (response) =>
       dispatch({ type: 'response/received', response, nowMs: Date.now() }),
     );
     return unsubscribe;
-  }, [state.screen, state.captureActive, sessionId]);
+  }, [state.screen, state.captureActive, sessionId, binding.mode]);
 
   const demoHotkey = useCallback(() => dispatch({ type: 'hotkey/pressed', nowMs: Date.now() }), []);
   useEffect(() => {
@@ -253,6 +268,16 @@ export default function App() {
 
   return (
     <main className="overlay" style={{ opacity: state.settings.hudOpacity }}>
+      {binding.mode === 'invalid' && (
+        <div className="binding-banner refused" role="alert">
+          Session config refused: {binding.error}. Launch the overlay from the GamePoint web app.
+        </div>
+      )}
+      {binding.mode === 'configured' && (
+        <div className="binding-banner bound">
+          Bound to session {binding.config.session_id.slice(0, 8)}… · {binding.config.title_slug}
+        </div>
+      )}
       {state.screen === 'consent' && <ConsentScreen dispatch={dispatch} />}
       {state.screen === 'persona' && <PersonaScreen dispatch={dispatch} />}
       {state.screen === 'hud' && <Hud state={state} dispatch={dispatch} />}
