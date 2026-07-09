@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { RouteLink, Sidebar, navigate, supabase, useRoute } from './lib';
+import { RouteLink, Sidebar, navigate, supabase, supabaseConfigured, useRoute } from './lib';
 import { canStartSession, gateReason } from './gating.mjs';
 
 type Playstyle = 'story' | 'mastery' | 'rank';
@@ -400,6 +400,33 @@ export function AppRoot(): React.JSX.Element {
     void supabase.from('profiles').select('*').maybeSingle()
       .then(({ data }) => setProfile((data as Profile | null) ?? null));
   }, [session]);
+
+  // Auth-configuration gate — checked after all hooks to satisfy React rules.
+  // VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY must be set in the deployment
+  // environment (Cloudflare Workers Builds → Settings → Environment Variables).
+  if (!supabaseConfigured) {
+    return (
+      <main className="cockpit app-cockpit">
+        <Sidebar footer={null} />
+        <div className="workspace app-workspace">
+          <section className="panel gate-panel" id="auth-not-configured">
+            <div className="panel-head">
+              <h2>Auth not configured</h2>
+              <span className="gate-chip">ENV MISSING</span>
+            </div>
+            <p>
+              <code>VITE_SUPABASE_URL</code> and{' '}
+              <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> must be set in the deployment
+              environment. Add them to Cloudflare Workers Builds{' '}
+              <strong>Settings → Environment Variables</strong> and redeploy, or set them
+              in your local <code>.env</code> file.
+            </p>
+            <RouteLink className="muted-link" to="/">← Back to overview</RouteLink>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   if (session === undefined) return <div className="auth-wrap"><p className="muted">Loading…</p></div>;
   if (session === null) return <Login />;
