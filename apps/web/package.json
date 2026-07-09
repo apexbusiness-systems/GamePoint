@@ -7,7 +7,9 @@
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "node --test src/*.test.mjs",
-    "build": "vite build"
+    "build": "vite build",
+    "preview": "vite preview --port 4173 --host",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.1",
@@ -18,5 +20,8 @@
     "react-dom": "latest",
     "typescript": "latest",
     "vite": "latest"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
   }
 }

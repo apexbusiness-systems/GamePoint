@@ -1,8 +1,15 @@
 // Cloudflare Workers Builds config for the public web control plane (ADR-005).
 // The Worker serves static assets only — it is never in the capture or assist path.
-// Dashboard build command must be:
-//   pnpm install --frozen-lockfile && pnpm --filter web build
-// Deploy command (default): npx wrangler deploy
+//
+// Deploy command: npx wrangler deploy  (uses this file from the repo root by default)
+//   or explicitly: npx wrangler deploy --config wrangler.jsonc
+//
+// REQUIRED environment variables (set in Cloudflare dashboard → Workers Builds → Settings →
+// Environment Variables for the "gamepoint" service; also set as GitHub Actions secrets for
+// the browser-e2e CI job):
+//   VITE_SUPABASE_URL             — your Supabase project URL (e.g. https://<ref>.supabase.co)
+//   VITE_SUPABASE_PUBLISHABLE_KEY — your Supabase publishable (anon) key
+// Without these the deployed app renders an "Auth not configured" gate instead of auth flows.
 {
   "name": "gamepoint",
   "main": "workers/web-assets.ts",
@@ -14,16 +21,19 @@
   "compatibility_date": "2026-07-08",
   // Self-contained deploy: wrangler runs this before bundling, so the assets
   // directory exists even if the dashboard build command is bare `wrangler deploy`.
+  // The build command must set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.
   "build": {
     "command": "npx -y pnpm@10.28.1 install --frozen-lockfile && npx -y pnpm@10.28.1 --filter web build",
     "watch_dir": "apps/web/src"
   },
   "assets": {
     "directory": "./apps/web/dist",
+    // ASSETS binding is required: workers/web-assets.ts calls env.ASSETS.fetch(request)
+    // to serve static files after canonical-host redirect logic runs.
     "binding": "ASSETS",
-    // Run the Worker before asset serving so canonical-host redirects (workers/web-assets.ts) always execute.
+    // Run the Worker before asset serving so canonical-host redirects always execute.
     "run_worker_first": true,
-    // SPA fallback: serve index.html for all unmatched routes (replaces _redirects)
+    // SPA fallback: serve index.html for all unmatched routes (replaces _redirects).
     "not_found_handling": "single-page-application"
   }
 }

@@ -1,11 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Publishable key: safe for client bundles by design; RLS enforces all access.
-const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? 'https://nbgofxqominofaghbxje.supabase.co';
-const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ?? 'sb_publishable_OT4qCpn8QbLCMlkuAYrGNg_6RlGxmTa';
+// Publishable key: safe for client bundles by design; RLS enforces all data access.
+// Both vars MUST be set in the deployment environment (Cloudflare Workers Builds env vars
+// or a local .env file). If either is absent supabaseConfigured is false and AppRoot renders
+// a clear configuration gate — no silent fallback to hardcoded production values.
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+/** True when VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY are both present at build time.
+ *  AppRoot checks this before rendering any auth- or db-dependent views. */
+export const supabaseConfigured: boolean = Boolean(SUPABASE_URL && SUPABASE_KEY);
+
+// Client is only functional when supabaseConfigured === true.
+// When unconfigured the placeholder domain causes all calls to fail safely at the network level.
+export const supabase = createClient(
+  SUPABASE_URL ?? 'https://unconfigured.invalid',
+  SUPABASE_KEY ?? 'unconfigured-key',
+);
 
 export interface NavItem { glyph: string; label: string; path: string }
 export const NAV: NavItem[] = [
