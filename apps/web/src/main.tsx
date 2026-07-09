@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 import { RouteLink, Sidebar, navigate, useRoute } from './lib';
@@ -12,17 +12,17 @@ type Coach = {
 };
 
 const coaches: Coach[] = [
-  { name: 'Maya', role: 'The Anchor', image: '/art/portrait-maya.png', cue: 'Hold the angle. Do not overpeek.' },
-  { name: 'Ro', role: 'The Shotcaller', image: '/art/portrait-ro.png', cue: 'Trade on contact. Second is close.' },
-  { name: 'Niko', role: 'The Analyst', image: '/art/portrait-niko.png', cue: 'Low on utility. Group before hit.' },
-  { name: 'June', role: 'The Builder', image: '/art/portrait-june.png', cue: 'Drop smoke here, then plant safe.' },
+  { name: 'Maya', role: 'The Anchor', image: '/art/portrait-maya.png', cue: 'Hold your position. Do not overextend.' },
+  { name: 'Ro', role: 'The Shotcaller', image: '/art/portrait-ro.png', cue: 'Press the opening. Backup is close.' },
+  { name: 'Niko', role: 'The Analyst', image: '/art/portrait-niko.png', cue: 'Low on resources. Regroup before the next push.' },
+  { name: 'June', role: 'The Builder', image: '/art/portrait-june.png', cue: 'Set up the approach, then commit together.' },
 ];
 
 const advice = [
-  ['Ro', 'Good rotate. You drew attention top side.'],
-  ['Maya', 'Anchor the next push. Hold the angle.'],
-  ['Niko', 'Watch their econ. Big buy round coming.'],
-  ['June', 'Try a fast deploy on A. They are stacked B.'],
+  ['Ro', 'Good positioning. You drew attention on that side.'],
+  ['Maya', 'Anchor the next push. Hold your ground.'],
+  ['Niko', 'Watch your resources. A big spend is coming.'],
+  ['June', 'Try a fast approach — they are grouped elsewhere.'],
 ];
 
 function CoachSquad(): React.JSX.Element {
@@ -31,7 +31,6 @@ function CoachSquad(): React.JSX.Element {
       <div className="panel-head">
         <div>
           <h2>Coach Squad</h2>
-          <p>Your crew. Your edge.</p>
         </div>
       </div>
       <div className="coach-row">
@@ -44,34 +43,11 @@ function CoachSquad(): React.JSX.Element {
           </article>
         ))}
       </div>
-      <button className="ghost-button" onClick={() => navigate('/app/coaches')} type="button">View Coach Squad →</button>
+      <button className="ghost-button" onClick={() => navigate('/app/coaches')} type="button">All Coaches →</button>
     </section>
   );
 }
 
-function HeroPanel(): React.JSX.Element {
-  return (
-    <section className="hero-panel" id="home">
-      <img src="/art/coach-table.png" alt="" />
-      <div className="hero-scrim" />
-      <div className="hero-copy">
-        <p><strong>GamePoint</strong> · AI game coaching</p>
-        <h1>Coach in<br /><em>your</em> corner.</h1>
-        <span>A coach in your corner: it watches the fight, it never touches the controls. Real community. Real progress.</span>
-        <div className="hero-micro">
-          <small>Screen-only</small>
-          <small>No game injection</small>
-          <small>Consent-first</small>
-        </div>
-        <div className="hero-actions">
-          <button onClick={() => navigate('/app/overlay')} type="button">Go Live <b>⌁</b></button>
-          <button className="secondary" onClick={() => navigate('/app/sessions')} type="button">▣ Schedule a Session</button>
-        </div>
-      </div>
-      <div className="floating-status"><i /> Overlay preview <b>▥</b></div>
-    </section>
-  );
-}
 
 function LiveCards(): React.JSX.Element {
   return (
@@ -122,7 +98,7 @@ function LiveCards(): React.JSX.Element {
           </div>
           <img src="/art/portrait-niko.png" alt="" />
         </div>
-        <button className="ghost-button" onClick={() => navigate('/app/sessions')} type="button">Join Session</button>
+        <button className="ghost-button" onClick={() => navigate('/app/sessions')} type="button">Join ↗</button>
       </section>
 
       <section className="panel progress-panel">
@@ -136,7 +112,7 @@ function LiveCards(): React.JSX.Element {
           <span>Positioning<br /><b>78</b></span>
           <div className="radar-shape" />
         </div>
-        <button className="ghost-button" onClick={() => navigate('/app/insights')} type="button">View full report ↗</button>
+        <button className="ghost-button" onClick={() => navigate('/app/insights')} type="button">Report ↗</button>
       </section>
     </div>
   );
@@ -161,22 +137,22 @@ function OverlayPreview(): React.JSX.Element {
         </div>
         <div className="coach-callout callout-left">
           <img src="/art/portrait-ro.png" alt="" />
-          <div><strong>Ro</strong><small>The Shotcaller</small><span>Nice entry. Trade should be coming.</span></div>
+          <div><strong>Ro</strong><small>The Shotcaller</small><span>Nice opening. Backup should be close.</span></div>
           <time>2m ago</time>
         </div>
         <div className="coach-callout callout-mid">
           <img src="/art/portrait-maya.png" alt="" />
-          <div><strong>Maya</strong><small>The Anchor</small><span>Hold this angle. Do not overpeek.</span></div>
+          <div><strong>Maya</strong><small>The Anchor</small><span>Hold this position. Do not overextend.</span></div>
           <time>1m ago</time>
         </div>
         <div className="coach-callout callout-right">
           <img src="/art/portrait-niko.png" alt="" />
-          <div><strong>Niko</strong><small>The Analyst</small><span>They are low on util. Good time to hit.</span></div>
+          <div><strong>Niko</strong><small>The Analyst</small><span>They are low on resources. Good time to press.</span></div>
           <time>1m ago</time>
         </div>
         <div className="coach-callout callout-june">
           <img src="/art/portrait-june.png" alt="" />
-          <div><strong>June</strong><small>The Builder</small><span>Drop smoke here, then plant safe.</span></div>
+          <div><strong>June</strong><small>The Builder</small><span>Set up here, then commit together.</span></div>
           <time>Now</time>
         </div>
         <div className="reticle" />
@@ -197,7 +173,7 @@ function ReplayAndStrategy(): React.JSX.Element {
         <div className="panel-head">
           <div>
             <h2 className="titlebar">Replay Review</h2>
-            <p>vs. Night Owls · Map: Haven · May 12, 2025</p>
+            <p>Latest Run · May 12</p>
           </div>
           <span>↻ ›</span>
         </div>
@@ -216,7 +192,7 @@ function ReplayAndStrategy(): React.JSX.Element {
           </div>
           <div className="moments">
             <strong className="column-label">Key Moments</strong>
-            {[['0:45', 'Early pick mid'], ['1:32', 'Rotation to A'], ['2:18', 'Post-plant setup'], ['3:05', 'Clutch attempt']].map(([at, label]) => (
+            {[['0:45', 'Fast start'], ['1:32', 'Objective reached'], ['2:18', 'Setup complete'], ['3:05', 'Clutch recovery']].map(([at, label]) => (
               <span className="moment" key={at}><b>{at}</b>{label}</span>
             ))}
             <strong className="column-label">Coach Notes</strong>
@@ -253,13 +229,11 @@ function ReplayAndStrategy(): React.JSX.Element {
                 <path d="M 250 108 l 10 10 M 260 108 l -10 10" />
               </g>
             </svg>
-            <span className="node node-a">A</span>
-            <span className="node node-b">B</span>
-            <span className="node node-c">R</span>
+            <span className="node node-a">1</span>
+            <span className="node node-b">2</span>
+            <span className="node node-c">⚑</span>
           </div>
           <div className="tool-list">
-            <strong>Tools</strong>
-            {['Arrow', 'Circle', 'Line', 'Zone', 'Text', 'Clear'].map((tool) => <span key={tool}>▸ {tool}</span>)}
             <strong>Layers</strong>
             <span>☑ Routes</span>
             <span>☑ Notes</span>
@@ -284,8 +258,8 @@ function ReplayAndStrategy(): React.JSX.Element {
               <img src="/art/portrait-june.png" alt="" />
               <div>
                 <strong>ClutchKid</strong>
-                <small>Posted a VOD review · 1h ago</small>
-                <p>Check out my latest review. Any tips on mid control?</p>
+                <small>1h ago</small>
+                <p>Check out my latest review. Any tips on positioning?</p>
                 <span>♡ 12   ↻ 5</span>
               </div>
             </article>
@@ -293,8 +267,8 @@ function ReplayAndStrategy(): React.JSX.Element {
               <img src="/art/portrait-maya.png" alt="" />
               <div>
                 <strong>StrategyLab</strong>
-                <small>Posted a strategy · 3h ago</small>
-                <p>New default execute for Bind. Works great post-patch.</p>
+                <small>3h ago</small>
+                <p>New default warm-up routine. Works great post-patch.</p>
                 <span>♡ 18   ↻ 7</span>
               </div>
             </article>
@@ -303,8 +277,8 @@ function ReplayAndStrategy(): React.JSX.Element {
             <strong>Active Thread <em>#general</em></strong>
             {[
               ['NovaMind', 'Great win last night team!', '/art/portrait-june.png', '5m ago'],
-              ['PlayerPerfect', 'That retake on B was clean.', '/art/portrait-maya.png', '9m ago'],
-              ['Ro', 'Remember: communicate early, win rounds.', '/art/portrait-ro.png', '11m ago'],
+              ['PlayerPerfect', 'That comeback in the last fight was clean.', '/art/portrait-maya.png', '9m ago'],
+              ['Ro', 'Remember: communicate early, it pays off.', '/art/portrait-ro.png', '11m ago'],
               ['You', 'Thanks for the calls, Ro.', '/art/portrait-niko.png', '12m ago'],
             ].map(([author, text, avatar, when]) => (
               <span className="thread-msg" key={text}>
@@ -313,7 +287,7 @@ function ReplayAndStrategy(): React.JSX.Element {
                 <small>{when}</small>
               </span>
             ))}
-            <button type="button">Message #general... ▷</button>
+            <button type="button">Message ▷</button>
           </div>
         </div>
       </section>
@@ -333,36 +307,77 @@ function DemoBar(): React.JSX.Element {
   );
 }
 
-function Landing(): React.JSX.Element {
+
+function MarketingHero(): React.JSX.Element {
   return (
-    <main className="cockpit">
-      <Sidebar footer={<SessionFooter />} />
-      <div className="workspace">
-        <div className="top-grid">
-          <HeroPanel />
-          <CoachSquad />
-        </div>
-        <LiveCards />
-        <DemoBar />
-        <div className="demo-surface" inert>
-          <OverlayPreview />
-          <ReplayAndStrategy />
-        </div>
-        <footer>
-          <span><i /> Overlay Active</span>
-          <span>Connected</span>
-          <span>No game injection · Not runtime supported until cleared</span>
-          <span>Next Advice Sync · 00:07</span>
-          <span>v1.2.0</span>
-        </footer>
+    <section className="marketing-hero">
+      <div className="marketing-copy">
+        <h1 className="animate-enter delay-1">The AI Coach That Watches Your Game, Not Your Screen.</h1>
+        <p className="animate-enter delay-2">GamePoint is the coach in your corner: it watches the fight, it never touches the controls. Real-time positioning and decision advice — zero game injection, 100% safe.</p>
+        <button className="primary-cta animate-enter delay-3" onClick={() => navigate('/app')} type="button">Start Coaching Free</button>
       </div>
-    </main>
+    </section>
+  );
+}
+
+function DashboardMockup(): React.JSX.Element {
+  return (
+    <div className="dashboard-showcase animate-enter delay-4">
+      <div className="showcase-header">
+        <span className="dot" /><span className="dot" /><span className="dot" />
+      </div>
+      <main className="cockpit">
+        <Sidebar footer={<SessionFooter />} />
+        <div className="workspace">
+          <div className="top-grid">
+            <CoachSquad />
+          </div>
+          <LiveCards />
+          <DemoBar />
+          <div className="demo-surface" inert>
+            <OverlayPreview />
+            <ReplayAndStrategy />
+          </div>
+          <footer>
+            <span><i /> Overlay Active</span>
+            <span>Connected</span>
+            <span className="footer-links">
+              <span>Screen-only</span> · <span>No game injection</span> · <span>Consent-first</span> · <span>Not runtime supported until cleared</span>
+            </span>
+            <span>Next Advice Sync · 00:07</span>
+            <span>v1.2.0</span>
+          </footer>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function MarketingLanding(): React.JSX.Element {
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  return (
+    <div className="marketing-page">
+      <header className="marketing-nav animate-enter">
+        <strong><b style={{ color: 'var(--lime)', marginRight: '8px'}}>G</b> GAMEPOINT</strong>
+        <button className="ghost-button" onClick={() => navigate('/app')} type="button">Sign In</button>
+      </header>
+      <MarketingHero />
+      <DashboardMockup />
+    </div>
   );
 }
 
 function Root(): React.JSX.Element {
   const path = useRoute();
-  return path === '/' || path === '' ? <Landing /> : <AppRoot />;
+  return path === '/' || path === '' ? <MarketingLanding /> : <AppRoot />;
 }
 
 createRoot(document.getElementById('root') as HTMLElement).render(<Root />);

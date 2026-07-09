@@ -24,6 +24,8 @@ jobs:
       - run: node packages/contracts/scripts/sync-edge.mjs --check
       - run: pnpm typecheck
       - run: node --test packages/contracts/src/*.test.mjs packages/router/src/*.test.mjs apps/overlay/src/*.test.mjs
+      # Web unit tests must pass before the production bundle is assembled.
+      - run: pnpm --filter web test
       - run: pnpm --filter web build
       - run: pnpm --filter overlay build
 
@@ -70,3 +72,61 @@ jobs:
       - run: cargo install cargo-audit --locked || true
       - run: cargo audit || echo "::warning::cargo audit reported findings — review before release"
         working-directory: services/capture-win
+
+  smoke:
+    # Verify production is healthy after every push/PR so a bad deploy is caught immediately.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Smoke — gamepointagent.com root + SPA fallback routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          check_route() {
+            local route="${1}"
+            local url="https://gamepointagent.com${route}"
+            local out
+            local status
+            out=$(mktemp)
+            status=$(curl -fsSL -o "$out" -w "%{http_code}" --max-time 30 "$url" 2>/dev/null || echo "000")
+            if [ "$status" != "200" ]; then
+              echo "FAIL: $url → HTTP $status (expected 200)"; exit 1
+            fi
+            if ! grep -q 'id="root"' "$out"; then
+              echo "FAIL: $url → missing app shell (id=\"root\") in response"; exit 1
+            fi
+            echo "OK: $url → HTTP 200, app shell present"
+          }
+          check_route ""
+          check_route "/app"
+          check_route "/app/sessions"
+          check_route "/app/overlay"
+          echo "All smoke checks passed"
+
+  browser-e2e:
+    # Full Playwright user-shoes test against a locally-built preview of the web app.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build web app
+        run: pnpm --filter web build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      - name: Install Playwright browsers
+        run: pnpm --filter web exec playwright install --with-deps chromium
+      - name: Run user-shoes E2E tests
+        run: pnpm --filter web e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 14
