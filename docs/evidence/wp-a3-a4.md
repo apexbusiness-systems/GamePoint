@@ -55,3 +55,47 @@ missing system libraries (libXdamage.so.1) that cannot be installed without
 root. All 13 spec failures are launch-time environmental, 2–7 ms each, zero
 page assertions executed. The `browser-e2e` CI job installs `--with-deps` and
 is the authoritative E2E gate for this PR.
+
+---
+
+# Review response round — 2026-07-09 (same day)
+
+## Behavioral gaps closed
+1. **Invalid-config capture path.** Previously only the subscription was blocked;
+   `Start capture` stayed active and the HUD could read "Watching". Now
+   `binding/refused` sets reducer-level `captureLocked`: `capture/toggle` is
+   structurally inert (same-reference no-op), the button is disabled and labeled
+   "Capture locked", and the status word reports `Capture locked`. 3 new reducer tests.
+2. **request_id → HUD.** `CoachingResponse` now carries optional `request_id`, the
+   assist function embeds it in `final` (HTTP body + `coaching_responses` row +
+   broadcast), the HUD Zod parse retains it, and the HUD renders a `req <short>`
+   correlation chip. Contract test proves parse retention.
+
+## Deferred items addressed
+3. **Rust serde mirror (three-point change per ADR-007) — DONE.**
+   `AssistRequest.request_id/client_version` + `CoachingResponse.request_id`
+   (`Option`, skip-serializing-if-none); both golden fixtures now include the
+   fields; CI `rust` job proves round-trip parity.
+4. **Migration 008 on the live database — DONE.** Connected via Supavisor
+   (`aws-1-ca-central-1`, PostgreSQL 17.6). Applied 008 in a transaction,
+   verified all 7 columns + `sessions_status_check` + both indexes, then
+   **re-applied cleanly to prove idempotency**. Read-only RLS sweep (rolled
+   back): RLS on for titles/embeddings/profiles/sessions/advice_events/
+   coaching_responses; 12 public policies + `realtime.session_channel_recv`
+   present; anon reads 0 rows from the user plane. The mutating pgTAP suite was
+   NOT run against production by design (creates test users) — it remains a
+   CI/staging concern.
+5. **Edge function verification — deno check now a CI merge blocker.**
+   `deno check` (Deno 2.9.2) over all three functions caught 2 real type
+   defects (one pre-existing since WP-4: `ModelResult` passed as a numeric
+   record on the degraded path). Both fixed; `edge-typecheck` CI job added.
+   **Live probe: `POST /functions/v1/assist` → 404 NOT_FOUND — the assist
+   function has never been deployed to production.** Deploy requires a
+   Supabase personal access token (`sbp_…`); the Management API correctly
+   rejects the service-role JWT ("JWT failed verification"). BLOCKED on owner
+   supplying a PAT or deploying via dashboard/CI secret.
+
+## Post-round verification (all local)
+compliance PASS · license PASS · sync-edge PASS · typecheck PASS ·
+node tests 49/49 · web tests 14/14 · web+overlay builds PASS ·
+deno edge check PASS (3/3 functions) · live DB columns/indexes/constraint verified.

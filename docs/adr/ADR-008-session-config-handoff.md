@@ -39,9 +39,15 @@ and no rate limiting.
    latent `coaching_responses.latency_ms` column the 007 insert path assumed.
 
 ## Consequences
-- The Rust dispatch mirror stays valid: new `AssistRequest` fields are optional
-  and the golden fixture is unchanged. Adding `request_id`/`client_version` to
-  the serde mirror is a follow-up three-point change per ADR-007.
+- The Rust dispatch mirror carries the optional correlation fields
+  (`request_id`/`client_version` on `AssistRequest`, `request_id` on
+  `CoachingResponse`) and both golden fixtures include them — the three-point
+  change per ADR-007 is complete and parity-tested in CI.
+- An invalid session config locks capture at the reducer level
+  (`captureLocked`): the toggle is structurally inert and the HUD can never
+  report Watching under a refused config.
+- `request_id` is part of the `CoachingResponse` contract (optional), so it
+  survives the broadcast row Zod parse and reaches HUD state and UI.
 - The overlay still runs fixture mode with zero configuration, so demos and
   tests need no backend — but a malformed config is a hard, visible refusal.
 - Rate limiting is per-user, DB-counted, and infrastructure-free; if p95 cost
