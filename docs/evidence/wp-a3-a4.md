@@ -99,3 +99,45 @@ is the authoritative E2E gate for this PR.
 compliance PASS · license PASS · sync-edge PASS · typecheck PASS ·
 node tests 49/49 · web tests 14/14 · web+overlay builds PASS ·
 deno edge check PASS (3/3 functions) · live DB columns/indexes/constraint verified.
+
+---
+
+# Live deployment + production loop proof — 2026-07-09 (PAT provided)
+
+## Deployed (Supabase CLI, project nbgofxqominofaghbxje, ca-central-1)
+- `assist` — deployed with `--no-verify-jwt`: the function performs its own JWT
+  validation (`auth.getUser`) so it can emit the deterministic 401 taxonomy;
+  security is preserved because every request is still user-authenticated in code.
+- `ingest-webhook`, `retrieval-plan` — deployed with platform JWT verification ON
+  (service-role-gated internal functions; defense in depth).
+- Secret set: `CORS_ALLOWED_ORIGINS=https://gamepointagent.com,tauri://localhost`.
+- NOT set (unavailable): `OPENAI_API_KEY` — model calls degrade to
+  `NO_ADVICE_THIS_FRAME` by design; every other stage runs live.
+
+## Live production proof (all against https://nbgofxqominofaghbxje.supabase.co)
+| # | Probe | Result |
+|---|---|---|
+| 1 | GET /assist | 405 `METHOD_NOT_ALLOWED`, request_id in body + `x-gp-request-id` |
+| 2 | POST, no auth | 401 `AUTH_REQUIRED` + correlation header |
+| 3 | Admin-created test user, password sign-in | OK |
+| 4 | POST, authenticated, malformed body | 400 `INVALID_REQUEST` |
+| 5 | Session insert via REST under RLS (own user) | created, `status='active'` (008 live) |
+| 6 | **Full loop**: valid AssistRequest (1×1 JPEG, real blake3, client request_id) | 200; body+header request_id == client's; degraded `NO_ADVICE_THIS_FRAME`, `not_verified=true`, `latency_ms=1375` |
+| 7 | Blocked title (diablo-iv, verify_terms) | 403 `TITLE_NOT_ELIGIBLE` |
+| 8 | Foreign session id | 403 `SESSION_NOT_OWNED` |
+| 9 | Rapid fire | 429 `RATE_LIMITED` at request #11 (12/min window incl. prior traffic) |
+| 10 | DB correlation | `advice_events` (12 rows, `client_version='e2e-proof-0.1.0'`) + `coaching_responses` row matching the client request_id |
+| 11 | **Realtime HUD path**: private `session:{id}` channel, `private:true`, user JWT — exactly the overlay subscription | `SUBSCRIBED` → assist fired → **BROADCAST_RECEIVED, `payload.record.request_id` matches client request_id** |
+
+## Cleanup
+Test user deleted via admin API (HTTP 200); cascade verified: 0 rows remaining in
+sessions / advice_events / coaching_responses for the test session. Production left
+in its pre-proof state (plus migration 008, which is the intended change).
+
+## Remaining for full Phase-4 signoff (not claimable from this environment)
+- `OPENAI_API_KEY` (or provider key) in Supabase secrets → verified advice with
+  evidence_ids instead of degraded responses.
+- Windows hardware run: real DXGI hotkey capture through services/capture-win →
+  the same (now-proven) backend loop → HUD.
+- Registry compliance titles: prod registry matches compliance-matrix.md (16 rows
+  verified live, 5 cleared runtime-eligible).
