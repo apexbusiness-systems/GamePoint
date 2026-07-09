@@ -54,3 +54,25 @@ test('landing demo panels are marked inert and labeled as preview', () => {
   assert.ok(main.includes('className="demo-surface" inert'), 'demo surface not inert');
   assert.ok(main.includes('PRODUCT PREVIEW'), 'preview label missing');
 });
+
+test('title copy policy: no uncleared tactical-shooter jargon in shipped copy', () => {
+  const banned = [
+    'overpeek', 'bombsite', 'plant safe', 'rotation to a', 'post-plant', 'retake on b',
+    'econ.', 'buy round', 'headshot', ' awp', 'haven ·', 'bind.', 'clutch attempt', 'mid control',
+  ];
+  for (const f of ['main.tsx', 'app.tsx']) {
+    const text = src(f).toLowerCase();
+    for (const term of banned) {
+      assert.ok(!text.includes(term), `${f} contains banned tactical-shooter term: "${term}"`);
+    }
+  }
+});
+
+test('Coach Squad cards map 1:1 to coaching_mode, are interactive, and disclose single-engine design', () => {
+  const app = src('app.tsx');
+  for (const mode of ['simple', 'guided', 'tactical', 'pro']) {
+    assert.ok(new RegExp(`mode:\\s*'${mode}'`).test(app), `COACHES missing explicit mapping to mode "${mode}"`);
+  }
+  assert.ok(app.includes('aria-pressed={props.profile.coaching_mode === c.mode}'), 'coach tiles are not wired to the persisted coaching_mode');
+  assert.ok(app.includes('does not run four separate agents'), 'missing single-engine disclosure copy');
+});
