@@ -1,6 +1,8 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
+import { RouteLink, Sidebar, navigate, useRoute } from './lib';
+import { AppRoot, SessionFooter } from './app';
 
 type Coach = {
   name: string;
@@ -8,23 +10,6 @@ type Coach = {
   image: string;
   cue: string;
 };
-
-type NavItem = {
-  label: string;
-  icon: string;
-  active?: boolean;
-};
-
-const navItems: NavItem[] = [
-  { label: 'Home', icon: '⌂', active: true },
-  { label: 'Live Overlay', icon: '▣' },
-  { label: 'Sessions', icon: '◴' },
-  { label: 'Replay Review', icon: '▧' },
-  { label: 'Coach Squad', icon: '◎' },
-  { label: 'Community', icon: '◇' },
-  { label: 'Insights', icon: '▥' },
-  { label: 'Settings', icon: '⚙' },
-];
 
 const coaches: Coach[] = [
   { name: 'Maya', role: 'The Anchor', image: '/art/portrait-maya.png', cue: 'Hold the angle. Do not overpeek.' },
@@ -39,32 +24,6 @@ const advice = [
   ['Niko', 'Watch their econ. Big buy round coming.'],
   ['June', 'Try a fast deploy on A. They are stacked B.'],
 ];
-
-function Sidebar(): React.JSX.Element {
-  return (
-    <aside className="sidebar" aria-label="GamePoint navigation">
-      <div className="brand">
-        <span className="brand-mark">G</span>
-        <strong>GamePoint</strong>
-      </div>
-      <nav>
-        {navItems.map((item) => (
-          <a className={item.active ? 'active' : undefined} href={`#${item.label.toLowerCase().replaceAll(' ', '-')}`} key={item.label}>
-            <span>{item.icon}</span>
-            {item.label}
-          </a>
-        ))}
-      </nav>
-      <div className="player-card">
-        <img src="/art/portrait-ro.png" alt="" />
-        <div>
-          <strong>PlayerOne</strong>
-          <span>Level 24</span>
-        </div>
-      </div>
-    </aside>
-  );
-}
 
 function CoachSquad(): React.JSX.Element {
   return (
@@ -85,7 +44,7 @@ function CoachSquad(): React.JSX.Element {
           </article>
         ))}
       </div>
-      <button className="ghost-button" type="button">View Coach Squad →</button>
+      <button className="ghost-button" onClick={() => navigate('/app/coaches')} type="button">View Coach Squad →</button>
     </section>
   );
 }
@@ -96,20 +55,20 @@ function HeroPanel(): React.JSX.Element {
       <img src="/art/coach-table.png" alt="" />
       <div className="hero-scrim" />
       <div className="hero-copy">
-        <p>Welcome back, <strong>PlayerOne</strong></p>
+        <p><strong>GamePoint</strong> · AI game coaching</p>
         <h1>Coach in<br /><em>your</em> corner.</h1>
         <span>A coach in your corner: it watches the fight, it never touches the controls. Real community. Real progress.</span>
         <div className="hero-micro">
-          <small>Overlay safe</small>
-          <small>4 coaches online</small>
-          <small>Sync 00:07</small>
+          <small>Screen-only</small>
+          <small>No game injection</small>
+          <small>Consent-first</small>
         </div>
         <div className="hero-actions">
-          <button type="button">Go Live <b>⌁</b></button>
-          <button className="secondary" type="button">▣ Schedule a Session</button>
+          <button onClick={() => navigate('/app/overlay')} type="button">Go Live <b>⌁</b></button>
+          <button className="secondary" onClick={() => navigate('/app/sessions')} type="button">▣ Schedule a Session</button>
         </div>
       </div>
-      <div className="floating-status"><i /> Overlay active <b>▥</b></div>
+      <div className="floating-status"><i /> Overlay preview <b>▥</b></div>
     </section>
   );
 }
@@ -127,7 +86,7 @@ function LiveCards(): React.JSX.Element {
           <strong>2 - 1</strong>
           <span className="hex opponent">G</span>
         </div>
-        <button className="outline-button" type="button">View Overlay →</button>
+        <button className="outline-button" onClick={() => navigate('/app/overlay')} type="button">View Overlay →</button>
       </section>
 
       <section className="panel advice-panel">
@@ -163,7 +122,7 @@ function LiveCards(): React.JSX.Element {
           </div>
           <img src="/art/portrait-niko.png" alt="" />
         </div>
-        <button className="ghost-button" type="button">Join Session</button>
+        <button className="ghost-button" onClick={() => navigate('/app/sessions')} type="button">Join Session</button>
       </section>
 
       <section className="panel progress-panel">
@@ -177,7 +136,7 @@ function LiveCards(): React.JSX.Element {
           <span>Positioning<br /><b>78</b></span>
           <div className="radar-shape" />
         </div>
-        <button className="ghost-button" type="button">View full report ↗</button>
+        <button className="ghost-button" onClick={() => navigate('/app/insights')} type="button">View full report ↗</button>
       </section>
     </div>
   );
@@ -362,18 +321,33 @@ function ReplayAndStrategy(): React.JSX.Element {
   );
 }
 
-function App(): React.JSX.Element {
+function DemoBar(): React.JSX.Element {
+  return (
+    <div className="demo-bar" role="note">
+      <span className="demo-chip">PRODUCT PREVIEW</span>
+      <span>Sample data — the live tools open inside the app:</span>
+      <RouteLink to="/app/replay">Replay Review →</RouteLink>
+      <RouteLink to="/app/overlay">Live Overlay →</RouteLink>
+      <RouteLink to="/app/community">Community →</RouteLink>
+    </div>
+  );
+}
+
+function Landing(): React.JSX.Element {
   return (
     <main className="cockpit">
-      <Sidebar />
+      <Sidebar footer={<SessionFooter />} />
       <div className="workspace">
         <div className="top-grid">
           <HeroPanel />
           <CoachSquad />
         </div>
         <LiveCards />
-        <OverlayPreview />
-        <ReplayAndStrategy />
+        <DemoBar />
+        <div className="demo-surface" inert>
+          <OverlayPreview />
+          <ReplayAndStrategy />
+        </div>
         <footer>
           <span><i /> Overlay Active</span>
           <span>Connected</span>
@@ -386,4 +360,9 @@ function App(): React.JSX.Element {
   );
 }
 
-createRoot(document.getElementById('root') as HTMLElement).render(<App />);
+function Root(): React.JSX.Element {
+  const path = useRoute();
+  return path === '/' || path === '' ? <Landing /> : <AppRoot />;
+}
+
+createRoot(document.getElementById('root') as HTMLElement).render(<Root />);

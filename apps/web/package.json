@@ -7,16 +7,21 @@
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "node --test src/*.test.mjs",
-    "build": "vite build"
+    "build": "vite build",
+    "preview": "vite preview --port 4173 --host",
+    "e2e": "playwright test"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.110.1",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest"
+    "typescript": "latest",
+    "vite": "latest"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
 }

@@ -1473,3 +1473,76 @@ footer span:last-child {
     transition-duration: 1ms !important;
   }
 }
+
+/* ---- App plane: auth, views, gates (tokens shared with cockpit) ---- */
+.auth-wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.auth-card { width: min(420px, 92vw); display: flex; flex-direction: column; gap: 14px; padding: 28px; }
+.auth-card h1 { font-size: 24px; margin: 0; }
+.auth-card .brand { margin-bottom: 4px; }
+.muted { color: var(--muted, #a8a68f); }
+.muted-link { color: var(--muted, #a8a68f); font-size: 12px; text-decoration: none; }
+.muted-link:hover { color: var(--lime, #c7ff13); }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted, #a8a68f); }
+.field input, .field select, .cta-row select {
+  background: rgba(8, 9, 5, 0.9); color: var(--text, #f3f1e5);
+  border: 1px solid rgba(199, 255, 19, 0.18); border-radius: 6px; padding: 10px 12px; font: inherit;
+}
+.field input:focus-visible, .field select:focus-visible { outline: 2px solid var(--lime, #c7ff13); outline-offset: 2px; }
+.form-error { color: #ff6b5e; font-size: 13px; margin: 0; }
+.form-notice { color: var(--lime, #c7ff13); font-size: 13px; margin: 0; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.check.disabled { opacity: 0.65; }
+.choice-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.choice { background: transparent; border: 1px solid rgba(244, 241, 229, 0.15); color: var(--text, #f3f1e5);
+  border-radius: 6px; padding: 8px 16px; cursor: pointer; text-transform: capitalize; }
+.choice.active { border-color: var(--lime, #c7ff13); color: var(--lime, #c7ff13); box-shadow: 0 0 12px rgba(199, 255, 19, 0.15) inset; }
+.view-stack { display: flex; flex-direction: column; gap: 16px; }
+.app-workspace { max-width: 980px; }
+.cta-row { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; margin-top: 10px; }
+.row-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.row-list li { display: flex; gap: 12px; align-items: baseline; justify-content: space-between; flex-wrap: wrap;
+  border-bottom: 1px solid rgba(244, 241, 229, 0.08); padding: 8px 0; font-size: 13px; }
+.row-list.compact li { justify-content: flex-start; }
+.ok-chip, .gate-chip { font-style: normal; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  border: 1px solid; border-radius: 4px; padding: 2px 8px; }
+.ok-chip { color: var(--lime, #c7ff13); border-color: rgba(199, 255, 19, 0.4); }
+.gate-chip { color: var(--amber, #ff9c1b); border-color: rgba(255, 156, 27, 0.4); }
+.gate-panel p { max-width: 60ch; }
+.gate-panel ul { color: var(--muted, #a8a68f); font-size: 13px; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.coach-tile { margin: 0; display: flex; flex-direction: column; gap: 4px; width: 132px; }
+.coach-tile img { width: 100%; border-radius: 6px; border: 1px solid rgba(199, 255, 19, 0.18); }
+.coach-tile figcaption { display: flex; flex-direction: column; font-size: 12px; }
+.coach-tile small { color: var(--muted, #a8a68f); }
+.player-card-link { text-decoration: none; color: inherit; }
+.player-card-link:hover strong { color: var(--lime, #c7ff13); }
+/* Demo plane: honest preview marking; inert content is non-interactive by the attribute itself */
+.demo-bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--muted, #a8a68f);
+  border: 1px solid rgba(255, 156, 27, 0.25); border-radius: 6px; padding: 8px 14px; margin: 4px 0; }
+.demo-bar a { color: var(--lime, #c7ff13); text-decoration: none; }
+.demo-bar a:hover { text-decoration: underline; }
+.demo-chip { color: var(--amber, #ff9c1b); border: 1px solid rgba(255, 156, 27, 0.4); border-radius: 4px;
+  padding: 2px 8px; font-size: 10px; letter-spacing: 0.08em; }
+.demo-surface { opacity: 0.98; }
+
+/* App-plane primary buttons: same CTA language as the cockpit hero */
+.view-stack button:not(.ghost-button):not(.choice),
+.auth-card button:not(.ghost-button) {
+  min-height: 38px;
+  padding: 0 17px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: #091000;
+  background: var(--lime);
+  font-size: 0.8rem;
+  font-weight: 850;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(199, 255, 19, 0.13);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+.view-stack button:not(.ghost-button):not(.choice):hover,
+.auth-card button:not(.ghost-button):hover {
+  border-color: rgba(199, 255, 19, 0.6);
+  box-shadow: 0 0 26px rgba(199, 255, 19, 0.24);
+  transform: translateY(-1px);
+}
+.view-stack button:disabled, .auth-card button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
