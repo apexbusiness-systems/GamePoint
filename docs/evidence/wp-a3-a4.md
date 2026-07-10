@@ -175,3 +175,11 @@ ADR-005), NOT GitHub (CI never calls models), never `VITE_*` (invariant 10).
   CSS deleted repo-wide — zero remaining `brand-mark`/`<b>G</b>` references.
 - Verified: typecheck PASS, 35 web+overlay tests PASS, both builds PASS, wordmark +
   favicon present in dist.
+
+## Adaptive provider health circuit (same day)
+`PROVIDER_COOLDOWN_MS` (120 s default) cooldown on network/429/5xx failures; unhealthy
+providers skipped instantly by vision cascade + embeddings chain, auto-retried after the
+window; any success clears the cooldown. 4xx alias errors do not trip it. deno check PASS;
+redeployed; live request returned real Groq advice through the new circuit (200, cleanup 200).
+Embeddings enablement runbook: enable "Generative Language API" on Google project 1046528506761
+(console link in ADR/evidence) or mint an AI Studio key — no code change needed.

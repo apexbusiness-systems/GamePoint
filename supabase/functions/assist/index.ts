@@ -60,10 +60,31 @@ const PROVIDERS: Record<string, ModelProvider> = {
   },
 };
 
-function resolveModel(alias: string): { provider: ModelProvider; model: string } {
+// Adaptive provider health (ADR-009): a provider that hard-fails (network, 429,
+// 5xx) is skipped for a cooldown window, then automatically retried — failover
+// is instant during an outage and recovery needs no operator action. In-memory
+// per isolate: worst case after a cold start is one probe request per provider.
+const PROVIDER_COOLDOWN_MS = Number(Deno.env.get('PROVIDER_COOLDOWN_MS') ?? 120_000);
+const providerDownUntil = new Map<string, number>();
+
+function providerHealthy(name: string): boolean {
+  return (providerDownUntil.get(name) ?? 0) <= Date.now();
+}
+
+function noteProviderFailure(name: string, status: number | null): void {
+  // Only outage signals trip the cooldown; 4xx config errors (bad model name,
+  // bad request) are alias-level problems, not vendor outages.
+  if (status === null || status === 429 || status >= 500) {
+    providerDownUntil.set(name, Date.now() + PROVIDER_COOLDOWN_MS);
+    console.error('provider_cooldown', { provider: name, ms: PROVIDER_COOLDOWN_MS });
+  }
+}
+
+function resolveModel(alias: string): { provider: ModelProvider; model: string; name: string } {
   const idx = alias.indexOf(':');
-  if (idx === -1) return { provider: PROVIDERS.openai, model: alias };
-  return { provider: PROVIDERS[alias.slice(0, idx)] ?? PROVIDERS.openai, model: alias.slice(idx + 1) };
+  if (idx === -1) return { provider: PROVIDERS.openai, model: alias, name: 'openai' };
+  const name = alias.slice(0, idx);
+  return { provider: PROVIDERS[name] ?? PROVIDERS.openai, model: alias.slice(idx + 1), name };
 }
 
 const aliases: ModelAliases = {
@@ -104,12 +125,14 @@ async function callVisionModel(
   frameB64: string,
 ): Promise<ModelResult> {
   const started = performance.now();
-  const { provider, model } = resolveModel(modelAlias);
-  if (!provider.key) {
-    console.error('model_provider_unconfigured', { model: modelAlias });
+  const { provider, model, name } = resolveModel(modelAlias);
+  if (!provider.key || !providerHealthy(name)) {
+    console.error('model_provider_skipped', { model: modelAlias, cooling: providerHealthy(name) === false });
     return { response: null, model: modelAlias, inputTokens: 0, outputTokens: 0, costUsdMicros: 0 };
   }
-  const res = await fetch(`${provider.baseUrl}/chat/completions`, {
+  let res: Response;
+  try {
+    res = await fetch(`${provider.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${provider.key}`,
@@ -134,11 +157,17 @@ async function callVisionModel(
       },
       max_tokens: Number(Deno.env.get('ASSIST_MAX_OUTPUT_TOKENS') ?? 120),
     }),
-  });
+    });
+  } catch {
+    noteProviderFailure(name, null); // network-level outage
+    return { response: null, model: modelAlias, inputTokens: 0, outputTokens: 0, costUsdMicros: 0 };
+  }
   if (!res.ok) {
+    noteProviderFailure(name, res.status);
     console.error('model_call_failed', { model: modelAlias, status: res.status, ms: performance.now() - started });
     return { response: null, model: modelAlias, inputTokens: 0, outputTokens: 0, costUsdMicros: 0 };
   }
+  providerDownUntil.delete(name); // healthy again on any success
   const body = await res.json();
   const usage = body.usage ?? {};
   const parsed = CoachingResponse.safeParse(
@@ -167,20 +196,24 @@ const EMBEDDING_MODELS: Record<string, { model: string; dimensions?: number }> =
 async function embedQuery(text: string): Promise<number[] | null> {
   const order = (Deno.env.get('EMBEDDINGS_PROVIDER_ORDER') ?? 'gemini,openai').split(',');
   for (const name of order) {
-    const provider = PROVIDERS[name.trim()];
-    const spec = EMBEDDING_MODELS[name.trim()];
-    if (!provider?.key || !spec) continue;
+    const pname = name.trim();
+    const provider = PROVIDERS[pname];
+    const spec = EMBEDDING_MODELS[pname];
+    if (!provider?.key || !spec || !providerHealthy(pname)) continue;
     try {
       const res = await fetch(`${provider.baseUrl}/embeddings`, {
         method: 'POST',
         headers: { authorization: `Bearer ${provider.key}`, 'content-type': 'application/json' },
         body: JSON.stringify({ model: spec.model, input: text, ...(spec.dimensions ? { dimensions: spec.dimensions } : {}) }),
       });
-      if (!res.ok) continue;
+      if (!res.ok) {
+        noteProviderFailure(pname, res.status);
+        continue;
+      }
       const embedding = (await res.json()).data?.[0]?.embedding ?? null;
       if (Array.isArray(embedding) && embedding.length === 1536) return embedding;
     } catch {
-      // provider unreachable — try the next one
+      noteProviderFailure(pname, null); // unreachable — cool down, try the next
     }
   }
   return null;

@@ -31,6 +31,14 @@ and resilience if one provider fails or throttles.
    Edge Function secrets only** (charter invariant 10). Not Cloudflare (static
    hosting only, ADR-005), not GitHub (CI never calls models), never `VITE_*`.
 
+6. **Adaptive provider health circuit.** A provider that hard-fails (network
+   error, 429, 5xx) is cooled down for `PROVIDER_COOLDOWN_MS` (default 120 s)
+   and skipped instantly by both the vision cascade and the embeddings chain,
+   then automatically retried after the window — failover is autonomous in both
+   directions (out and back). 4xx config errors do not trip the circuit (an
+   alias typo must not exile a healthy vendor). State is in-memory per isolate:
+   a cold start costs at most one probe per provider.
+
 ## Consequences
 - Zero new dependencies; both providers speak the OpenAI chat/completions shape.
 - Telemetry `model` column now records the full alias (`groq:…`), so outcome
