@@ -100,19 +100,10 @@ button {
   text-transform: uppercase;
 }
 
-.brand strong {
-  font-size: 1.1rem;
-}
-
-.brand-mark {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  color: #061000;
-  background: var(--lime);
-  clip-path: polygon(25% 3%, 78% 3%, 98% 38%, 78% 94%, 20% 94%, 2% 48%);
-  font-weight: 950;
+.brand-wordmark {
+  height: 36px;
+  width: auto;
+  display: block;
 }
 
 nav {
@@ -808,15 +799,10 @@ footer i,
   text-transform: uppercase;
 }
 
-.gp-chip b {
-  display: grid;
-  width: 16px;
-  height: 16px;
-  place-items: center;
-  color: #061000;
-  background: var(--lime);
-  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
-  font-size: 0.75rem;
+.gp-chip img {
+  height: 18px;
+  width: auto;
+  display: block;
 }
 
 .squad-strip {
@@ -958,15 +944,10 @@ footer i,
   transform: translateX(-50%);
 }
 
-.overlay-hud b {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  justify-self: center;
-  color: #071100;
-  background: var(--lime);
-  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+.overlay-hud img {
+  height: 16px;
+  width: auto;
+  display: block;
 }
 
 .lower-grid {

@@ -57,7 +57,7 @@ function App(): React.JSX.Element {
         </div>
         <section className="live-preview">
           <img src="/art/component-live-overlay.png" alt="" />
-          <div className="gp-chip"><b>G</b> GamePoint</div>
+          <div className="gp-chip"><img alt="GamePoint" src="/art/gpa-wordmark.png" /></div>
           <div className="score-strip" aria-label="Live scoreboard">
             <span className="squad-strip"><img src="/art/portrait-ro.png" alt="" /><img src="/art/portrait-maya.png" alt="" /></span>
             <span>2</span><strong>1:12</strong><span>1</span>
@@ -77,7 +77,7 @@ function App(): React.JSX.Element {
           <div className="reticle" />
           <div className="overlay-hud">
             <span>100 ◎</span>
-            <b>G</b>
+            <img alt="GamePoint" src="/art/gpa-wordmark.png" />
             <span>25 / 75</span>
           </div>
         </section>

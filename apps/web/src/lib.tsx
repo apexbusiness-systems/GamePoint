@@ -77,8 +77,7 @@ export function Sidebar(props: { footer?: React.ReactNode }): React.JSX.Element 
   return (
     <aside className="sidebar" aria-label="GamePoint navigation">
       <div className="brand">
-        <span className="brand-mark">G</span>
-        <strong>GamePoint</strong>
+        <img alt="GamePoint" className="brand-wordmark" src="/art/gpa-wordmark.png" />
       </div>
       <nav>
         {NAV.map((item) => (

@@ -117,15 +117,10 @@ button { font: inherit; }
   text-transform: uppercase;
 }
 
-.gp-chip b {
-  display: grid;
-  width: 18px;
-  height: 18px;
-  place-items: center;
-  color: #061000;
-  background: var(--lime);
-  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
-  font-size: 0.6rem;
+.gp-chip img {
+  height: 16px;
+  width: auto;
+  display: block;
 }
 
 .squad-strip {
@@ -276,15 +271,10 @@ button { font: inherit; }
   transform: translateX(-50%);
 }
 
-.overlay-hud b {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  justify-self: center;
-  color: #071100;
-  background: var(--lime);
-  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+.overlay-hud img {
+  height: 14px;
+  width: auto;
+  display: block;
 }
 
 .consent {
