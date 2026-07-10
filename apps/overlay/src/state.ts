@@ -1,7 +1,7 @@
 // Overlay state: pure, framework-free, node-tested. The UI is a projection of
 // this reducer — every screen/state in the apex-frontend State Gate exists here.
 import { z } from 'zod';
-import type { CoachingResponse } from 'contracts';
+import type { CoachingResponse, HotkeyIntent } from 'contracts';
 
 export type Playstyle = 'story' | 'mastery' | 'rank';
 
@@ -39,6 +39,28 @@ export function loadSettings(raw: string | null): PersistedSettings {
   }
 }
 
+// --- Voice (WP-6 / ADR-010): deliberately NOT part of PersistedSettings ---------
+// Consent must be re-asked every session ("no remember my choice") — keeping this slice
+// outside PersistedSettings guarantees that by construction, since only state.settings is
+// ever written to localStorage (see usePersistedReducer in App.tsx). A fresh app load always
+// produces initialVoiceState, with no code path that could accidentally persist it.
+
+export interface VoiceState {
+  consented: boolean; // session-only opt-in; never true on a fresh load
+  outputEnabled: boolean; // TTS: speak advice_text aloud
+  listening: boolean; // true only while the push-to-talk control is physically held
+  lastIntent: HotkeyIntent | null;
+  lastError: string | null;
+}
+
+export const initialVoiceState: VoiceState = {
+  consented: false,
+  outputEnabled: false,
+  listening: false,
+  lastIntent: null,
+  lastError: null,
+};
+
 // --- App flow -------------------------------------------------------------------
 
 export type Screen = 'consent' | 'persona' | 'hud';
@@ -61,6 +83,8 @@ export interface OverlayState {
    *  capture can never activate until the config is corrected (no silent fixture fallback). */
   captureLocked: boolean;
   session: { adviceCount: number; verifiedCount: number; refusals: number };
+  /** WP-6: session-only voice state — see VoiceState above for why this isn't persisted. */
+  voice: VoiceState;
 }
 
 export function initialState(settings: PersistedSettings): OverlayState {
@@ -72,6 +96,7 @@ export function initialState(settings: PersistedSettings): OverlayState {
     captureActive: false,
     captureLocked: false,
     session: { adviceCount: 0, verifiedCount: 0, refusals: 0 },
+    voice: initialVoiceState,
   };
 }
 
@@ -86,7 +111,14 @@ export type Action =
   | { type: 'title/unsupported'; titleName: string | null }
   | { type: 'title/supported' }
   | { type: 'mute/toggle' }
-  | { type: 'opacity/set'; value: number };
+  | { type: 'opacity/set'; value: number }
+  // WP-6 / ADR-010 — session-only voice actions (never touch PersistedSettings).
+  | { type: 'voice/consent-set'; consented: boolean }
+  | { type: 'voice/output-toggle' }
+  | { type: 'voice/ptt-start' }
+  | { type: 'voice/ptt-end' }
+  | { type: 'voice/intent-recognized'; intent: HotkeyIntent; nowMs: number }
+  | { type: 'voice/error'; message: string };
 
 const REFUSAL_MARKER = 'never calls out live opponent information';
 
@@ -147,6 +179,29 @@ export function reduce(state: OverlayState, action: Action): OverlayState {
       const value = Math.min(1, Math.max(0.35, action.value));
       return { ...state, settings: { ...state.settings, hudOpacity: value } };
     }
+
+    // --- WP-6 / ADR-010 -----------------------------------------------------------
+    case 'voice/consent-set':
+      // Revoking consent hard-resets the whole slice — no lingering listening/output
+      // flag can survive a "no" (mirrors captureLocked's structural-lock pattern).
+      return { ...state, voice: action.consented ? { ...state.voice, consented: true } : initialVoiceState };
+    case 'voice/output-toggle':
+      if (!state.voice.consented) return state; // structurally gated, same as capture/toggle
+      return { ...state, voice: { ...state.voice, outputEnabled: !state.voice.outputEnabled } };
+    case 'voice/ptt-start':
+      if (!state.voice.consented) return state;
+      return { ...state, voice: { ...state.voice, listening: true, lastError: null } };
+    case 'voice/ptt-end':
+      return { ...state, voice: { ...state.voice, listening: false } };
+    case 'voice/intent-recognized': {
+      const voice = { ...state.voice, listening: false, lastIntent: action.intent };
+      // Same structural guard as hotkey/pressed — a voice-recognized intent is just an
+      // alternate trigger for the identical existing request flow, never a parallel path.
+      if (!state.captureActive || state.screen !== 'hud') return { ...state, voice };
+      return { ...state, voice, hud: { kind: 'thinking', sinceMs: action.nowMs } };
+    }
+    case 'voice/error':
+      return { ...state, voice: { ...state.voice, listening: false, lastError: action.message } };
   }
 }
 

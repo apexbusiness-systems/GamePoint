@@ -7,6 +7,7 @@
   --panel: rgba(7, 8, 4, 0.86);
   --line: rgba(200, 255, 24, 0.24);
   --muted: #aaa88f;
+  --red: #ff4238;
 }
 
 * { box-sizing: border-box; }
@@ -366,4 +367,31 @@ button { font: inherit; }
   color: #f2a6a6;
   border-color: rgba(242, 166, 166, 0.4);
   background: rgba(242, 166, 166, 0.08);
+}
+
+/* WP-6 / ADR-010: voice color token + mic indicator, mirroring the capture indicator's
+   existing (currently unstyled) pattern. --red matches apps/web/src/styles.css's token
+   value for cross-app consistency — "red means recording and nothing else"
+   (docs/design/voice-and-perception.md rule 2), owned jointly by capture and mic now. */
+.capture-indicator,
+.mic-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.capture-indicator.on,
+.mic-indicator.on {
+  background: var(--red);
+  box-shadow: 0 0 12px var(--red);
+}
+
+.voice-talk {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.voice-error {
+  font-size: 0.72rem;
 }

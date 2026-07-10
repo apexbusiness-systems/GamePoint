@@ -12,6 +12,13 @@ import {
 } from './state';
 import { demoScript, FixtureResponseSource, makeResponseSource } from './realtime';
 import { resolveBinding } from './config';
+import {
+  browserSpeechRecognizer,
+  browserSpeechSynthesis,
+  ENABLE_VOICE_INPUT,
+  matchVoiceIntent,
+  speakAdvice,
+} from './voice-agent';
 
 const STORAGE_KEY = 'gamepoint.overlay.v1';
 
@@ -42,7 +49,7 @@ function ConsentScreen({ dispatch }: { dispatch: React.Dispatch<Action> }) {
         <li><strong>What is captured:</strong> your screen, only while capture is on, only when you press the assist hotkey.</li>
         <li><strong>What leaves this device:</strong> a single frame per assist, sent encrypted for analysis, processed in memory and discarded after the answer.</li>
         <li><strong>What is kept:</strong> nothing by default — no frames, no recordings, no chat, no usernames.</li>
-        <li><strong>Voice:</strong> off, and not available in this version.</li>
+        <li><strong>Voice:</strong> off by default. If you turn it on in Settings, GamePoint can speak advice aloud and listen only while you hold the talk button — never in the background, and it asks again every session.</li>
         <li><strong>Anti-cheat note:</strong> GamePoint never touches game processes, but any third-party overlay can draw a false-positive review on kernel anti-cheat titles. Read the per-title notes before ranked play.</li>
       </ul>
       <label className="check">
@@ -154,9 +161,74 @@ function statusWord(state: OverlayState): string {
   return state.captureActive ? 'Watching' : 'Capture off';
 }
 
+/**
+ * WP-6 / ADR-010: push-to-talk voice command control. Rendered only once the user has
+ * granted session-only voice consent. Fully wired, but real recognition stays inert while
+ * ENABLE_VOICE_INPUT is false (see voice-agent.ts) — holding the button then simply reports
+ * "voice input isn't available in this build yet" rather than silently doing nothing.
+ */
+function VoiceTalkButton({ state, dispatch }: { state: OverlayState; dispatch: React.Dispatch<Action> }) {
+  const recognizerRef = useRef(ENABLE_VOICE_INPUT ? browserSpeechRecognizer() : null);
+
+  const start = useCallback(() => {
+    dispatch({ type: 'voice/ptt-start' });
+    const recognizer = recognizerRef.current;
+    if (!recognizer) {
+      dispatch({ type: 'voice/error', message: 'Voice input isn’t available in this build yet.' });
+      return;
+    }
+    recognizer.onresult = (transcript) => {
+      const intent = matchVoiceIntent(transcript);
+      if (intent) {
+        dispatch({ type: 'voice/intent-recognized', intent, nowMs: Date.now() });
+      } else {
+        dispatch({ type: 'voice/error', message: `Didn’t catch that — try “assist”, “explain”, or “recap”.` });
+      }
+    };
+    recognizer.onerror = (message) => dispatch({ type: 'voice/error', message });
+    recognizer.start();
+  }, [dispatch]);
+
+  const stop = useCallback(() => {
+    recognizerRef.current?.stop();
+    dispatch({ type: 'voice/ptt-end' });
+  }, [dispatch]);
+
+  return (
+    <div className="voice-talk">
+      <button
+        className="ghost"
+        aria-pressed={state.voice.listening}
+        onMouseDown={start}
+        onMouseUp={stop}
+        onMouseLeave={() => state.voice.listening && stop()}
+        onTouchStart={start}
+        onTouchEnd={stop}
+      >
+        <span className={`mic-indicator ${state.voice.listening ? 'on' : ''}`} aria-hidden="true" />
+        {state.voice.listening ? 'Listening…' : 'Hold to talk'}
+      </button>
+      {state.voice.lastError && <p className="muted voice-error">{state.voice.lastError}</p>}
+    </div>
+  );
+}
+
 function Hud({ state, dispatch }: { state: OverlayState; dispatch: React.Dispatch<Action> }) {
   const advice = state.hud.kind === 'advice' ? state.hud.response : null;
   const tier = advice ? confidenceTier(advice.confidence) : null;
+
+  // WP-6 / ADR-010: speak each new advice response once, iff voice output is consented,
+  // enabled, and not muted. Reuses the existing mute toggle rather than a second control.
+  const synth = useMemo(() => browserSpeechSynthesis(), []);
+  useEffect(() => {
+    if (state.hud.kind !== 'advice') return;
+    speakAdvice(synth, state.hud.response.advice_text, {
+      enabled: state.voice.consented && state.voice.outputEnabled,
+      muted: state.settings.muted,
+    });
+    // Keyed on receivedAt, not the whole hud object, so this fires once per new response.
+  }, [state.hud.kind === 'advice' ? state.hud.receivedAt : null]);
+
   return (
     <section className="card flow" aria-label="GamePoint coaching HUD">
       {/* 3-second sequence, tier 1: system status — text + indicator, never color alone. */}
@@ -189,6 +261,8 @@ function Hud({ state, dispatch }: { state: OverlayState; dispatch: React.Dispatc
       <div aria-live="polite" className="advice-region">
         <AdviceBody state={state} />
       </div>
+
+      {state.voice.consented && <VoiceTalkButton state={state} dispatch={dispatch} />}
 
       {advice && (
         <footer className="hud-bar chips">
@@ -230,9 +304,34 @@ function Hud({ state, dispatch }: { state: OverlayState; dispatch: React.Dispatc
               onChange={(e) => dispatch({ type: 'opacity/set', value: Number(e.target.value) })}
             />
           </label>
-          <label className="row disabled" title="Voice capture ships later; off by design in v1.0">
-            Voice input <input type="checkbox" disabled /> <span className="badge subtle">coming later</span>
+
+          {/* WP-6 / ADR-010: session-only voice consent — never persisted, re-asked every
+              launch. Replaces the earlier "coming later" placeholder now that voice output
+              is real; voice input stays labeled per ENABLE_VOICE_INPUT until Windows-verified. */}
+          <label className="row">
+            Enable voice this session
+            <input
+              type="checkbox"
+              checked={state.voice.consented}
+              onChange={(e) => dispatch({ type: 'voice/consent-set', consented: e.target.checked })}
+            />
           </label>
+          {state.voice.consented && (
+            <label className="row">
+              Speak advice aloud
+              <input
+                type="checkbox"
+                checked={state.voice.outputEnabled}
+                onChange={() => dispatch({ type: 'voice/output-toggle' })}
+              />
+            </label>
+          )}
+          {!ENABLE_VOICE_INPUT && (
+            <p className="muted">
+              Voice commands (push-to-talk) are built but not yet enabled — pending a
+              Windows-hardware privacy check. Speaking advice aloud works today.
+            </p>
+          )}
         </div>
       </details>
     </section>
