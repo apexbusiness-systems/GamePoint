@@ -127,7 +127,7 @@ function OverlayPreview(): React.JSX.Element {
       </div>
       <div className="game-window">
         <img className="overlay-source" src="/art/component-live-overlay.png" alt="" />
-        <div className="gp-chip"><b>G</b> GamePoint</div>
+        <div className="gp-chip"><img alt="GamePoint" src="/art/gpa-wordmark.png" /></div>
         <div className="score-strip" aria-label="Live scoreboard">
           <span className="squad-strip"><img src="/art/portrait-ro.png" alt="" /><img src="/art/portrait-maya.png" alt="" /></span>
           <span>2</span>
@@ -158,7 +158,7 @@ function OverlayPreview(): React.JSX.Element {
         <div className="reticle" />
         <div className="overlay-hud">
           <span>100 ◎</span>
-          <b>G</b>
+          <img alt="GamePoint" src="/art/gpa-wordmark.png" />
           <span>25 / 75</span>
         </div>
       </div>

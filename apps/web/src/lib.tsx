@@ -12,6 +12,11 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | u
  *  AppRoot checks this before rendering any auth- or db-dependent views. */
 export const supabaseConfigured: boolean = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
+/** Browser-safe env pair for the overlay launch config (A3). VITE_ values only —
+ *  never a server secret (charter invariant 10). */
+export const supabaseEnv: { url: string; publishableKey: string } | null =
+  SUPABASE_URL && SUPABASE_KEY ? { url: SUPABASE_URL, publishableKey: SUPABASE_KEY } : null;
+
 // Client is only functional when supabaseConfigured === true.
 // When unconfigured the placeholder domain causes all calls to fail safely at the network level.
 export const supabase = createClient(
@@ -72,8 +77,7 @@ export function Sidebar(props: { footer?: React.ReactNode }): React.JSX.Element 
   return (
     <aside className="sidebar" aria-label="GamePoint navigation">
       <div className="brand">
-        <span className="brand-mark">G</span>
-        <strong>GamePoint</strong>
+        <img alt="GamePoint" className="brand-wordmark" src="/art/gpa-wordmark.png" />
       </div>
       <nav>
         {NAV.map((item) => (

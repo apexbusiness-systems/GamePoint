@@ -128,3 +128,29 @@ test('confidence tiers and not-verified splitting', () => {
   });
   assert.deepEqual(splitNotVerified('Solid play.'), { prefix: null, body: 'Solid play.' });
 });
+
+// --- A3 capture lock: invalid config can never present as Watching -----------------
+test('binding/refused forces capture off and locks it', () => {
+  const consentedHud = reduce(
+    reduce(initialState(defaultSettings), { type: 'consent/accept', ageGatePassed: true, now: '2026-07-09T00:00:00Z' }),
+    { type: 'persona/set', playstyle: 'mastery' },
+  );
+  const watching = reduce(consentedHud, { type: 'capture/toggle' });
+  assert.equal(watching.captureActive, true);
+  const locked = reduce(watching, { type: 'binding/refused' });
+  assert.equal(locked.captureActive, false);
+  assert.equal(locked.captureLocked, true);
+});
+
+test('capture/toggle is structurally inert while locked', () => {
+  const locked = reduce(initialState(defaultSettings), { type: 'binding/refused' });
+  const after = reduce(locked, { type: 'capture/toggle' });
+  assert.equal(after.captureActive, false);
+  assert.equal(after, locked); // same reference: a true no-op
+});
+
+test('hotkey/pressed does nothing while locked', () => {
+  const locked = reduce(initialState(defaultSettings), { type: 'binding/refused' });
+  const after = reduce(locked, { type: 'hotkey/pressed', nowMs: 1 });
+  assert.equal(after.hud.kind, 'idle');
+});

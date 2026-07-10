@@ -10,3 +10,7 @@
 | [ADR-003](../docs/adr/ADR-003-frame-only-v1.md) | Frame-Only V1 | Accepted | V1 processes single frames only; no continuous video or audio capture. |
 | [ADR-004](../docs/adr/ADR-004-model-alias-cost-circuit.md) | Model Alias + Cost Circuit | Accepted | Models are aliased; cost/latency budgets enforced as circuit breakers. |
 | [ADR-005](../docs/adr/ADR-005-cloudflare-frontend-hosting.md) | Cloudflare Frontend Hosting | Accepted | `apps/web` is Cloudflare Pages; Supabase stays the backend authority. |
+| [ADR-006](../docs/adr/ADR-006-dispatch-https-json.md) | Dispatch HTTPS/JSON | Accepted | Capture-service dispatch transport is HTTPS/JSON, not gRPC. |
+| [ADR-007](../docs/adr/ADR-007-zod-single-source-contracts.md) | Zod Single Contract Source | Accepted | Zod schemas in `packages/contracts` are canonical; edge copies are hash-synced, Rust mirrors fixture-parity tested. |
+| [ADR-008](../docs/adr/ADR-008-session-config-handoff.md) | Session Config Handoff + Assist Taxonomy | Accepted | Overlay binds to a validated web-issued SessionConfig; assist gains error taxonomy, request correlation, and per-user rate limiting. |
+| [ADR-009](../docs/adr/ADR-009-hybrid-provider-routing.md) | Hybrid Provider Routing | Accepted | Provider-prefixed model aliases (groq:/gemini:/openai:) with cross-provider failover; keys live in Supabase secrets only. |

@@ -57,10 +57,15 @@ export class FixtureResponseSource implements ResponseSource {
   }
 }
 
-export function makeResponseSource(env: {
-  VITE_SUPABASE_URL?: string;
-  VITE_SUPABASE_ANON_KEY?: string;
-}): ResponseSource {
+export function makeResponseSource(
+  env: {
+    VITE_SUPABASE_URL?: string;
+    VITE_SUPABASE_ANON_KEY?: string;
+  },
+  // A3: an explicit session binding (from a validated SessionConfig) wins over env.
+  binding?: { url: string; key: string },
+): ResponseSource {
+  if (binding) return new SupabaseResponseSource(binding.url, binding.key);
   if (env.VITE_SUPABASE_URL && env.VITE_SUPABASE_ANON_KEY) {
     return new SupabaseResponseSource(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
   }

@@ -117,15 +117,10 @@ button { font: inherit; }
   text-transform: uppercase;
 }
 
-.gp-chip b {
-  display: grid;
-  width: 18px;
-  height: 18px;
-  place-items: center;
-  color: #061000;
-  background: var(--lime);
-  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
-  font-size: 0.6rem;
+.gp-chip img {
+  height: 16px;
+  width: auto;
+  display: block;
 }
 
 .squad-strip {
@@ -276,15 +271,10 @@ button { font: inherit; }
   transform: translateX(-50%);
 }
 
-.overlay-hud b {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  justify-self: center;
-  color: #071100;
-  background: var(--lime);
-  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+.overlay-hud img {
+  height: 14px;
+  width: auto;
+  display: block;
 }
 
 .consent {
@@ -356,4 +346,24 @@ button { font: inherit; }
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
   }
+}
+
+/* A3 session binding banner: explicit bound/refused state, never silent. */
+.binding-banner {
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  padding: 6px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 1px solid transparent;
+}
+.binding-banner.bound {
+  color: #9be8c5;
+  border-color: rgba(155, 232, 197, 0.35);
+  background: rgba(155, 232, 197, 0.08);
+}
+.binding-banner.refused {
+  color: #f2a6a6;
+  border-color: rgba(242, 166, 166, 0.4);
+  background: rgba(242, 166, 166, 0.08);
 }

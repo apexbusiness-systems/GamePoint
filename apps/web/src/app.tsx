@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { RouteLink, Sidebar, navigate, supabase, supabaseConfigured, useRoute } from './lib';
+import { RouteLink, Sidebar, navigate, supabase, supabaseConfigured, supabaseEnv, useRoute } from './lib';
+import { buildOverlayLaunchConfig } from './overlay-launch';
 import { canStartSession, gateReason } from './gating.mjs';
 
 type Playstyle = 'story' | 'mastery' | 'rank';
@@ -28,7 +29,8 @@ interface TitleRow {
 interface SessionRow {
   id: string;
   started_at: string;
-  titles: { display_name: string } | null;
+  title_id?: string | null;
+  titles: { display_name: string; slug?: string } | null;
 }
 
 interface AdviceEventRow {
@@ -104,7 +106,7 @@ function Login(): React.JSX.Element {
   return (
     <div className="auth-wrap">
       <form className="panel auth-card" onSubmit={(e) => { void submit(e); }}>
-        <div className="brand"><span className="brand-mark">G</span><strong>GamePoint</strong></div>
+        <div className="brand"><img alt="GamePoint" className="brand-wordmark" src="/art/gpa-wordmark.png" /></div>
         <h1>{mode === 'signin' ? 'Sign in' : 'Create your account'}</h1>
         <p className="muted">Screen-only coaching. No game injection. Consent required before capture.</p>
         <Field label="Email">
@@ -220,11 +222,31 @@ function Sessions(props: { userId: string }): React.JSX.Element {
   const [picked, setPicked] = useState<string>('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  // A3: export the validated overlay handoff config for a real session.
+  const copyLaunchConfig = async (s: SessionRow): Promise<void> => {
+    if (!supabaseEnv || !s.title_id || !s.titles?.slug) return;
+    try {
+      const encoded = buildOverlayLaunchConfig({
+        sessionId: s.id,
+        titleId: s.title_id,
+        titleSlug: s.titles.slug,
+        supabaseUrl: supabaseEnv.url,
+        publishableKey: supabaseEnv.publishableKey,
+      });
+      await navigator.clipboard.writeText(encoded);
+      setCopied(s.id);
+      window.setTimeout(() => setCopied((prev) => (prev === s.id ? null : prev)), 2500);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not build overlay config.');
+    }
+  };
 
   const load = useCallback((): void => {
     void supabase.from('titles').select('id, slug, display_name, publisher, anti_cheat_class, compliance_status, runtime_eligible, wave').order('wave').order('display_name')
       .then(({ data, error: err }) => { if (err) setError(err.message); else setTitles((data ?? []) as TitleRow[]); });
-    void supabase.from('sessions').select('id, started_at, titles(display_name)').order('started_at', { ascending: false }).limit(20)
+    void supabase.from('sessions').select('id, started_at, title_id, titles(display_name, slug)').order('started_at', { ascending: false }).limit(20)
       .then(({ data, error: err }) => { if (err) setError(err.message); else setSessions((data ?? []) as unknown as SessionRow[]); });
   }, []);
   useEffect(load, [load]);
@@ -271,7 +293,18 @@ function Sessions(props: { userId: string }): React.JSX.Element {
         <div className="panel-head"><h2>Your sessions</h2></div>
         {sessions === null ? <p className="muted">Loading…</p> : sessions.length === 0
           ? <p className="muted">No sessions logged yet.</p>
-          : <ul className="row-list">{sessions.map((s) => <li key={s.id}><strong>{s.titles?.display_name ?? 'Unassigned title'}</strong><span>{new Date(s.started_at).toLocaleString()}</span></li>)}</ul>}
+          : <ul className="row-list">{sessions.map((s) => (
+              <li key={s.id}>
+                <strong>{s.titles?.display_name ?? 'Unassigned title'}</strong>
+                <span>{new Date(s.started_at).toLocaleString()}</span>
+                {supabaseEnv && s.title_id && s.titles?.slug ? (
+                  <button className="ghost-button" onClick={() => { void copyLaunchConfig(s); }} type="button">
+                    {copied === s.id ? 'Copied ✓' : 'Copy overlay config'}
+                  </button>
+                ) : null}
+              </li>
+            ))}</ul>}
+        <p className="muted">Overlay config binds the desktop overlay to one session — paste it into the overlay launch prompt. It contains only browser-safe values.</p>
       </section>
     </div>
   );

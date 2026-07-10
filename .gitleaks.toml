@@ -1,0 +1,13 @@
+# Gitleaks config: extends the default ruleset. The ONLY exceptions are the two
+# documented, deliberately fake fixture values used by the SessionConfig
+# secret-wall tests (ADR-008) — a secret wall cannot be tested without
+# secret-shaped strings. Anything else that looks like a key still fails CI.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documented non-secret fixtures for secret-wall tests (ADR-008)"
+regexes = [
+  '''sb_publishable_fixture_0123456789''',
+  '''sb_secret_0123456789abcdefghij''',
+]

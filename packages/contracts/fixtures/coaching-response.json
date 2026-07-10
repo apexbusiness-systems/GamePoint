@@ -1,9 +1,12 @@
 {
-  "advice_text": "Your flask charges are empty and the minimap shows an unexplored rare pack marker. Refill at the checkpoint before engaging — rares in this zone burst hard.",
+  "advice_text": "Your flask charges are empty and the minimap shows an unexplored rare pack marker. Refill at the checkpoint before engaging \u2014 rares in this zone burst hard.",
   "recommended_action": "Return to checkpoint, refill flasks, then engage the rare pack.",
-  "evidence_ids": ["9c8b7a6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d"],
+  "evidence_ids": [
+    "9c8b7a6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d"
+  ],
   "confidence": 0.82,
   "source_tier": "verified",
   "not_verified": false,
-  "latency_ms": 412
+  "latency_ms": 412,
+  "request_id": "4d5e6f7a-8b9c-4d1e-9f2a-3b4c5d6e7f8a"
 }

@@ -57,6 +57,9 @@ export interface OverlayState {
   settings: PersistedSettings;
   hud: HudStatus;
   captureActive: boolean;
+  /** A3: true when a session config arrived but failed validation. Structural lock —
+   *  capture can never activate until the config is corrected (no silent fixture fallback). */
+  captureLocked: boolean;
   session: { adviceCount: number; verifiedCount: number; refusals: number };
 }
 
@@ -67,6 +70,7 @@ export function initialState(settings: PersistedSettings): OverlayState {
     settings,
     hud: { kind: 'idle' },
     captureActive: false,
+    captureLocked: false,
     session: { adviceCount: 0, verifiedCount: 0, refusals: 0 },
   };
 }
@@ -74,6 +78,7 @@ export function initialState(settings: PersistedSettings): OverlayState {
 export type Action =
   | { type: 'consent/accept'; ageGatePassed: boolean; now: string }
   | { type: 'persona/set'; playstyle: Playstyle }
+  | { type: 'binding/refused' }
   | { type: 'capture/toggle' }
   | { type: 'hotkey/pressed'; nowMs: number }
   | { type: 'response/received'; response: CoachingResponse; nowMs: number }
@@ -99,7 +104,11 @@ export function reduce(state: OverlayState, action: Action): OverlayState {
       const settings = { ...state.settings, playstyle: action.playstyle };
       return { ...state, settings, screen: 'hud' };
     }
+    case 'binding/refused':
+      // Invalid config is a hard stop: capture off now and locked until corrected.
+      return { ...state, captureLocked: true, captureActive: false, hud: { kind: 'idle' } };
     case 'capture/toggle':
+      if (state.captureLocked) return state; // locked: toggle is structurally inert
       return { ...state, captureActive: !state.captureActive, hud: { kind: 'idle' } };
     case 'hotkey/pressed':
       if (!state.captureActive || state.screen !== 'hud') return state;

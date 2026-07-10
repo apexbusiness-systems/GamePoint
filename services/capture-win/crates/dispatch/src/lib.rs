@@ -63,6 +63,13 @@ pub struct AssistRequest {
     pub hotkey_intent: HotkeyIntent,
     pub local_observables: LocalObservables,
     pub blake3: String,
+    /// A4: optional correlation id (uuid). Omitted on the wire when None; the
+    /// Edge Function generates one and echoes it via `x-gp-request-id`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub request_id: Option<String>,
+    /// A4: optional client build tag for telemetry.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_version: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -75,6 +82,9 @@ pub struct CoachingResponse {
     pub not_verified: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub latency_ms: Option<u64>,
+    /// A4: correlation id assigned by the Edge Function; present on live responses.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub request_id: Option<String>,
 }
 
 /// Build a request from encoded frame bytes: checksum + base64 in one place.
@@ -104,6 +114,9 @@ pub fn build_request(
         hotkey_intent,
         local_observables,
         blake3: blake3::hash(frame_bytes).to_hex().to_string(),
+        // Correlation is server-assigned in v1; the svc layer may set these later.
+        request_id: None,
+        client_version: None,
     }
 }
 

@@ -6,7 +6,7 @@
 
 - **Owner:** APEX Business Systems LTD, Edmonton, AB
 - **Repo:** `apexbusiness-systems/GamePoint`
-- **Version:** `0.1.0` (pre-release scaffold)
+- **Version:** `0.1.0` (pre-release — backend coaching loop deployed + live-verified 2026-07-09; awaiting Windows hardware proof and evidence corpus)
 - **Canonical Domain:** `gamepointagent.com`
 
 ## What It Does

@@ -7,6 +7,7 @@ import {
   AssistRequest,
   CoachingResponse,
   NO_ADVICE_THIS_FRAME,
+  type AssistErrorCode,
 } from '../_shared/contracts.ts';
 import {
   buildPrompt,
@@ -17,10 +18,79 @@ import {
 } from '../_shared/router.ts';
 import { preflight, json } from '../_shared/cors.ts';
 
+// A4 error taxonomy: every non-200 carries a deterministic code + request_id.
+// The human-readable `error` field is preserved for pre-taxonomy clients.
+function refuse(
+  req: Request,
+  status: number,
+  code: AssistErrorCode,
+  message: string,
+  requestId: string,
+): Response {
+  return json(
+    req,
+    status,
+    { error_code: code, error: message, request_id: requestId },
+    { 'x-gp-request-id': requestId },
+  );
+}
+
+// --- Hybrid provider registry (ADR-009) --------------------------------------
+// Model aliases are provider-prefixed ("groq:<model>", "gemini:<model>",
+// "openai:<model>"); un-prefixed aliases resolve to openai for back-compat.
+// Cross-provider fallback keeps the loop alive when one vendor fails.
+interface ModelProvider {
+  baseUrl: string;
+  key: string | undefined;
+}
+
+const PROVIDERS: Record<string, ModelProvider> = {
+  groq: {
+    baseUrl: Deno.env.get('GROQ_BASE_URL') ?? 'https://api.groq.com/openai/v1',
+    key: Deno.env.get('GROQ_API_KEY'),
+  },
+  gemini: {
+    baseUrl: Deno.env.get('GEMINI_BASE_URL') ??
+      'https://generativelanguage.googleapis.com/v1beta/openai',
+    key: Deno.env.get('GEMINI_API_KEY'),
+  },
+  openai: {
+    baseUrl: Deno.env.get('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1',
+    key: Deno.env.get('OPENAI_API_KEY'),
+  },
+};
+
+// Adaptive provider health (ADR-009): a provider that hard-fails (network, 429,
+// 5xx) is skipped for a cooldown window, then automatically retried — failover
+// is instant during an outage and recovery needs no operator action. In-memory
+// per isolate: worst case after a cold start is one probe request per provider.
+const PROVIDER_COOLDOWN_MS = Number(Deno.env.get('PROVIDER_COOLDOWN_MS') ?? 120_000);
+const providerDownUntil = new Map<string, number>();
+
+function providerHealthy(name: string): boolean {
+  return (providerDownUntil.get(name) ?? 0) <= Date.now();
+}
+
+function noteProviderFailure(name: string, status: number | null): void {
+  // Only outage signals trip the cooldown; 4xx config errors (bad model name,
+  // bad request) are alias-level problems, not vendor outages.
+  if (status === null || status === 429 || status >= 500) {
+    providerDownUntil.set(name, Date.now() + PROVIDER_COOLDOWN_MS);
+    console.error('provider_cooldown', { provider: name, ms: PROVIDER_COOLDOWN_MS });
+  }
+}
+
+function resolveModel(alias: string): { provider: ModelProvider; model: string; name: string } {
+  const idx = alias.indexOf(':');
+  if (idx === -1) return { provider: PROVIDERS.openai, model: alias, name: 'openai' };
+  const name = alias.slice(0, idx);
+  return { provider: PROVIDERS[name] ?? PROVIDERS.openai, model: alias.slice(idx + 1), name };
+}
+
 const aliases: ModelAliases = {
-  primary: Deno.env.get('VISION_MODEL_PRIMARY') ?? 'gpt-5-nano',
-  escalation: Deno.env.get('VISION_MODEL_ESCALATION') ?? 'gpt-5.4-mini',
-  fallback: Deno.env.get('VISION_MODEL_FALLBACK') ?? 'gemini-2.5-flash-lite',
+  primary: Deno.env.get('VISION_MODEL_PRIMARY') ?? 'groq:meta-llama/llama-4-scout-17b-16e-instruct',
+  escalation: Deno.env.get('VISION_MODEL_ESCALATION') ?? 'gemini:gemini-2.5-flash',
+  fallback: Deno.env.get('VISION_MODEL_FALLBACK') ?? 'gemini:gemini-flash-lite-latest',
 };
 const breaker = new CostCircuitBreaker(
   Number(Deno.env.get('COST_BREAKER_USD_MICROS') ?? 500),
@@ -49,16 +119,23 @@ interface ModelResult {
 }
 
 async function callVisionModel(
-  model: string,
+  modelAlias: string,
   stablePrefix: string,
   volatile: string,
   frameB64: string,
 ): Promise<ModelResult> {
   const started = performance.now();
-  const res = await fetch(`${Deno.env.get('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1'}/chat/completions`, {
+  const { provider, model, name } = resolveModel(modelAlias);
+  if (!provider.key || !providerHealthy(name)) {
+    console.error('model_provider_skipped', { model: modelAlias, cooling: providerHealthy(name) === false });
+    return { response: null, model: modelAlias, inputTokens: 0, outputTokens: 0, costUsdMicros: 0 };
+  }
+  let res: Response;
+  try {
+    res = await fetch(`${provider.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
-      authorization: `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+      authorization: `Bearer ${provider.key}`,
       'content-type': 'application/json',
     },
     body: JSON.stringify({
@@ -80,11 +157,17 @@ async function callVisionModel(
       },
       max_tokens: Number(Deno.env.get('ASSIST_MAX_OUTPUT_TOKENS') ?? 120),
     }),
-  });
-  if (!res.ok) {
-    console.error('model_call_failed', { model, status: res.status, ms: performance.now() - started });
-    return { response: null, model, inputTokens: 0, outputTokens: 0, costUsdMicros: 0 };
+    });
+  } catch {
+    noteProviderFailure(name, null); // network-level outage
+    return { response: null, model: modelAlias, inputTokens: 0, outputTokens: 0, costUsdMicros: 0 };
   }
+  if (!res.ok) {
+    noteProviderFailure(name, res.status);
+    console.error('model_call_failed', { model: modelAlias, status: res.status, ms: performance.now() - started });
+    return { response: null, model: modelAlias, inputTokens: 0, outputTokens: 0, costUsdMicros: 0 };
+  }
+  providerDownUntil.delete(name); // healthy again on any success
   const body = await res.json();
   const usage = body.usage ?? {};
   const parsed = CoachingResponse.safeParse(
@@ -92,7 +175,7 @@ async function callVisionModel(
   );
   return {
     response: parsed.success ? parsed.data : null,
-    model,
+    model: modelAlias,
     inputTokens: usage.prompt_tokens ?? 0,
     outputTokens: usage.completion_tokens ?? 0,
     // Micro-USD accounting from env-configured per-token rates (vendor prices drift; ADR-004).
@@ -103,23 +186,47 @@ async function callVisionModel(
   };
 }
 
+// Embeddings must match vector(1536) in 003_embeddings.sql; providers are tried in
+// order and any failure degrades to null (retrieval simply returns no chunks).
+const EMBEDDING_MODELS: Record<string, { model: string; dimensions?: number }> = {
+  gemini: { model: Deno.env.get('GEMINI_EMBEDDING_MODEL') ?? 'gemini-embedding-001', dimensions: 1536 },
+  openai: { model: Deno.env.get('TEXT_EMBEDDING_MODEL') ?? 'text-embedding-3-small' },
+};
+
 async function embedQuery(text: string): Promise<number[] | null> {
-  const res = await fetch(`${Deno.env.get('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1'}/embeddings`, {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({ model: Deno.env.get('TEXT_EMBEDDING_MODEL') ?? 'text-embedding-3-small', input: text }),
-  });
-  if (!res.ok) return null;
-  return (await res.json()).data?.[0]?.embedding ?? null;
+  const order = (Deno.env.get('EMBEDDINGS_PROVIDER_ORDER') ?? 'gemini,openai').split(',');
+  for (const name of order) {
+    const pname = name.trim();
+    const provider = PROVIDERS[pname];
+    const spec = EMBEDDING_MODELS[pname];
+    if (!provider?.key || !spec || !providerHealthy(pname)) continue;
+    try {
+      const res = await fetch(`${provider.baseUrl}/embeddings`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${provider.key}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ model: spec.model, input: text, ...(spec.dimensions ? { dimensions: spec.dimensions } : {}) }),
+      });
+      if (!res.ok) {
+        noteProviderFailure(pname, res.status);
+        continue;
+      }
+      const embedding = (await res.json()).data?.[0]?.embedding ?? null;
+      if (Array.isArray(embedding) && embedding.length === 1536) return embedding;
+    } catch {
+      noteProviderFailure(pname, null); // unreachable — cool down, try the next
+    }
+  }
+  return null;
 }
 
 Deno.serve(async (req) => {
   const pf = preflight(req);
   if (pf) return pf;
-  if (req.method !== 'POST') return json(req, 405, { error: 'method not allowed' });
+  // A4: correlation id exists before any decision so every refusal is traceable.
+  let requestId: string = crypto.randomUUID();
+  if (req.method !== 'POST') {
+    return refuse(req, 405, 'METHOD_NOT_ALLOWED', 'method not allowed', requestId);
+  }
   const started = performance.now();
 
   // 1. Auth: user JWT required.
@@ -128,12 +235,19 @@ Deno.serve(async (req) => {
   const jwt = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
   const db = createClient(supabaseUrl, serviceKey);
   const { data: userData, error: authError } = await db.auth.getUser(jwt);
-  if (authError || !userData?.user) return json(req, 401, { error: 'authentication required' });
+  if (authError || !userData?.user) {
+    return refuse(req, 401, 'AUTH_REQUIRED', 'authentication required', requestId);
+  }
 
   // 2. Validate payload at the boundary.
   const parsed = AssistRequest.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return json(req, 400, { error: 'invalid assist request' });
+  if (!parsed.success) {
+    return refuse(req, 400, 'INVALID_REQUEST', 'invalid assist request', requestId);
+  }
   const request = parsed.data;
+  // Client-supplied correlation id wins so the desktop service can trace end to end.
+  requestId = request.request_id ?? requestId;
+  const clientVersion = request.client_version ?? null;
 
   // 3. Session ownership + title gate (compliance is a query, not a convention).
   const { data: session } = await db
@@ -142,7 +256,21 @@ Deno.serve(async (req) => {
     .eq('id', request.session_id)
     .single();
   if (!session || session.user_id !== userData.user.id) {
-    return json(req, 403, { error: 'session not owned by caller' });
+    return refuse(req, 403, 'SESSION_NOT_OWNED', 'session not owned by caller', requestId);
+  }
+
+  // A4 rate limit: sliding 60s window per user across all their sessions.
+  // Cheap relational count — no new infrastructure, no new dependency.
+  const ratePerMin = Number(Deno.env.get('ASSIST_RATE_LIMIT_PER_MIN') ?? 12);
+  const { count: recentCount } = await db
+    .from('advice_events')
+    .select('id, sessions!inner(user_id)', { count: 'exact', head: true })
+    .eq('sessions.user_id', userData.user.id)
+    .gte('created_at', new Date(Date.now() - 60_000).toISOString());
+  if ((recentCount ?? 0) >= ratePerMin) {
+    // No telemetry row on purpose: rate-limited rejects must not grow the very
+    // table the limiter counts, or a saturated user could never recover.
+    return refuse(req, 429, 'RATE_LIMITED', 'assist rate limit reached — try again shortly', requestId);
   }
   const { data: title } = await db
     .from('titles')
@@ -154,6 +282,8 @@ Deno.serve(async (req) => {
     await db.from('advice_events').insert({
       session_id: request.session_id,
       title_id: title?.id ?? null,
+      request_id: requestId,
+      client_version: clientVersion,
       mode: request.hotkey_intent,
       model,
       latency_ms: Math.round(performance.now() - started),
@@ -167,10 +297,13 @@ Deno.serve(async (req) => {
 
   if (!title || !title.runtime_eligible || title.compliance_status !== 'cleared') {
     await telemetry('error', 'none');
-    return json(req, 403, {
-      error: 'title not runtime-eligible',
-      detail: 'This title has not passed the GamePoint compliance gate for live coaching.',
-    });
+    return refuse(
+      req,
+      403,
+      'TITLE_NOT_ELIGIBLE',
+      'This title has not passed the GamePoint compliance gate for live coaching.',
+      requestId,
+    );
   }
 
   const deliver = async (
@@ -179,14 +312,18 @@ Deno.serve(async (req) => {
     model: string,
     usage: Partial<Record<string, number>>,
   ) => {
-    const final = { ...response, latency_ms: Math.round(performance.now() - started) };
+    const final = {
+      ...response,
+      latency_ms: Math.round(performance.now() - started),
+      request_id: requestId, // A4: correlation survives body, row, broadcast, HUD
+    };
     await db.from('coaching_responses').insert({
       session_id: request.session_id,
       title_id: title.id,
       ...final,
     });
     await telemetry(outcome, model, { ...usage, confidence: response.confidence });
-    return json(req, 200, final);
+    return json(req, 200, final, { 'x-gp-request-id': requestId });
   };
 
   try {
@@ -219,8 +356,15 @@ Deno.serve(async (req) => {
 
     let result = await callVisionModel(primaryModel, stablePrefix, volatile, request.frame_b64);
     if (result.response === null) {
-      // Retry once, then degrade — never a crash (§1.2).
+      // Retry once on the same alias (§1.2).
       result = await callVisionModel(primaryModel, stablePrefix, volatile, request.frame_b64);
+    }
+    if (result.response === null && aliases.fallback !== primaryModel) {
+      // ADR-009 hybrid resilience: a full provider outage fails over to the
+      // other vendor before degrading to NO_ADVICE.
+      const spent = result;
+      result = await callVisionModel(aliases.fallback, stablePrefix, volatile, request.frame_b64);
+      result.costUsdMicros += spent.costUsdMicros;
     }
     if (
       result.response !== null &&
@@ -238,7 +382,13 @@ Deno.serve(async (req) => {
     breaker.record(result.costUsdMicros);
 
     if (result.response === null) {
-      return await deliver(NO_ADVICE_THIS_FRAME, 'degraded', result.model, result);
+      // Pre-existing defect (caught by deno check): ModelResult is not a numeric
+      // record — pass the usage fields explicitly.
+      return await deliver(NO_ADVICE_THIS_FRAME, 'degraded', result.model, {
+        inputTokens: result.inputTokens,
+        outputTokens: result.outputTokens,
+        costUsdMicros: result.costUsdMicros,
+      });
     }
 
     // 8. Advantage Check post-filter — the second wall (§1.1.2).
@@ -251,6 +401,6 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error('assist_unhandled', { name: (err as Error).name }); // no content logged
     await telemetry('error', 'none');
-    return json(req, 200, NO_ADVICE_THIS_FRAME);
+    return json(req, 200, { ...NO_ADVICE_THIS_FRAME, request_id: requestId }, { 'x-gp-request-id': requestId });
   }
 });
