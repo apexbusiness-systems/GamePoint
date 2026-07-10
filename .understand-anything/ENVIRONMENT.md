@@ -10,7 +10,8 @@ These compile into the Vite bundle. They are **public by definition** — only p
 | Variable | Surface | Description |
 |----------|---------|-------------|
 | `VITE_SUPABASE_URL` | `apps/web`, `apps/overlay` | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | `apps/web`, `apps/overlay` | Supabase anonymous (public) key |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | `apps/web` | Publishable key (the web client reads this name) |
+| `VITE_SUPABASE_ANON_KEY` | `apps/overlay` | Anon key (overlay env fallback; RLS-protected) |
 | `VITE_GAMEPOINT_DOWNLOAD_URL` | `apps/web` | Download page target URL |
 | `VITE_SUPPORTED_TITLES_SOURCE` | `apps/web` | Title list source (`fixture` or `api`) |
 
@@ -25,15 +26,29 @@ These run exclusively in Supabase Deno runtime. Never in a browser bundle.
 | `SUPABASE_SERVICE_ROLE_KEY` | **SECRET** — bypasses RLS, admin access |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated allowed origins |
 
-## Model Provider Config (Server-Side)
+## Model Provider Config (Server-Side — Supabase Edge secrets ONLY, ADR-009)
+
+Aliases are provider-prefixed: `<provider>:<model>` with providers `groq`, `gemini`, `openai`.
 
 | Variable | Description |
 |----------|-------------|
-| `MODEL_PROVIDER_PRIMARY` | Primary inference model alias |
-| `MODEL_PROVIDER_FALLBACK` | Fallback model alias |
-| `VISION_MODEL_PRIMARY` | Primary vision model alias |
-| `VISION_MODEL_ESCALATION` | Escalation vision model alias |
-| `TEXT_EMBEDDING_MODEL` | Embedding model alias |
+| `GROQ_API_KEY` / `GEMINI_API_KEY` / `OPENAI_API_KEY` | Provider keys — never in Cloudflare, GitHub, or `VITE_*` |
+| `GROQ_BASE_URL` / `GEMINI_BASE_URL` / `OPENAI_BASE_URL` | Optional endpoint overrides (OpenAI-compatible) |
+| `VISION_MODEL_PRIMARY` | Default `groq:meta-llama/llama-4-scout-17b-16e-instruct` |
+| `VISION_MODEL_ESCALATION` | Default `gemini:gemini-2.5-flash` (escalation off by default, ADR-004) |
+| `VISION_MODEL_FALLBACK` | Default `gemini:gemini-flash-lite-latest` (cross-provider failover) |
+| `EMBEDDINGS_PROVIDER_ORDER` | Default `gemini,openai`; Gemini pinned to 1536 dims (`vector(1536)`) |
+| `GEMINI_EMBEDDING_MODEL` / `TEXT_EMBEDDING_MODEL` | Embedding model overrides per provider |
+| `PROVIDER_COOLDOWN_MS` | Adaptive health circuit cooldown (default 120000) |
+| `ASSIST_RATE_LIMIT_PER_MIN` | Per-user sliding-window rate limit (default 12) |
+| `COST_INPUT_MICROS_PER_TOKEN` / `COST_OUTPUT_MICROS_PER_TOKEN` | µ$/token accounting (0 on free tier) |
+
+### Placement rule (charter invariant 10)
+| Platform | Gets |
+|---|---|
+| Supabase Edge secrets | ALL provider keys + server config above |
+| Cloudflare build vars | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` only |
+| GitHub Actions | Nothing today (CI needs no secrets); deploy tokens only if CI-driven deploys are added |
 
 ## Assist Budget Defaults (Server-Side)
 

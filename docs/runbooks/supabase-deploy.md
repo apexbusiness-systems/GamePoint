@@ -27,3 +27,17 @@ node packages/router/scripts/e2e-fixture.mjs                     # posts fixture
 ```
 
 Record every command's verbatim output in `docs/evidence/wp1.md` / `wp4.md`. Any failure → stop, fix, re-run; never mark PASS on a summarized result (§6).
+
+---
+
+## Deployed state — 2026-07-09 (live-verified)
+
+- Migrations 001–008 applied to production (`nbgofxqominofaghbxje`, ca-central-1).
+  Note: prod predates CLI migration tracking — apply via SQL, all migrations are idempotent.
+- Functions deployed: `assist` (deployed `--no-verify-jwt`; performs its own JWT check to
+  emit the ADR-008 error taxonomy), `ingest-webhook`, `retrieval-plan` (platform JWT ON).
+- Secrets set: `GROQ_API_KEY`, `GEMINI_API_KEY`, `CORS_ALLOWED_ORIGINS`, cost rates (0).
+- Redeploy after contract changes: `node packages/contracts/scripts/sync-edge.mjs` first
+  (CI fails on drift), then `supabase functions deploy assist --project-ref <ref> --no-verify-jwt`.
+- pgTAP suite (`supabase/tests/rls_test.sql`): CI/staging ONLY — it creates test users.
+  Production RLS verification: read-only sweep (see docs/evidence/wp-a3-a4.md).
