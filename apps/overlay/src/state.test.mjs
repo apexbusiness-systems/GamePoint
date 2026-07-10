@@ -154,3 +154,71 @@ test('hotkey/pressed does nothing while locked', () => {
   const after = reduce(locked, { type: 'hotkey/pressed', nowMs: 1 });
   assert.equal(after.hud.kind, 'idle');
 });
+
+// --- WP-6 / ADR-010: voice is session-only, never persisted, structurally gated --------
+
+test('voice starts unconsented on every fresh load, even for a returning consented user', () => {
+  const s = initialState(consented);
+  assert.deepEqual(s.voice, {
+    consented: false,
+    outputEnabled: false,
+    listening: false,
+    lastIntent: null,
+    lastError: null,
+  });
+});
+
+test('voice/output-toggle and voice/ptt-start are structurally inert without consent', () => {
+  const s = initialState(consented);
+  const afterOutput = reduce(s, { type: 'voice/output-toggle' });
+  assert.equal(afterOutput, s, 'no consent: true no-op, same reference');
+  const afterPtt = reduce(s, { type: 'voice/ptt-start' });
+  assert.equal(afterPtt, s);
+});
+
+test('voice/consent-set(true) unlocks output-toggle and ptt-start', () => {
+  let s = reduce(initialState(consented), { type: 'voice/consent-set', consented: true });
+  assert.equal(s.voice.consented, true);
+  s = reduce(s, { type: 'voice/output-toggle' });
+  assert.equal(s.voice.outputEnabled, true);
+  s = reduce(s, { type: 'voice/ptt-start' });
+  assert.equal(s.voice.listening, true);
+});
+
+test('voice/consent-set(false) hard-resets the whole voice slice, not just the flag', () => {
+  let s = reduce(initialState(consented), { type: 'voice/consent-set', consented: true });
+  s = reduce(s, { type: 'voice/output-toggle' });
+  s = reduce(s, { type: 'voice/ptt-start' });
+  assert.equal(s.voice.outputEnabled, true);
+  assert.equal(s.voice.listening, true);
+  s = reduce(s, { type: 'voice/consent-set', consented: false });
+  assert.deepEqual(s.voice, {
+    consented: false,
+    outputEnabled: false,
+    listening: false,
+    lastIntent: null,
+    lastError: null,
+  });
+});
+
+test('voice/intent-recognized behaves exactly like hotkey/pressed: arms only while capturing on hud', () => {
+  let s = reduce(initialState(consented), { type: 'voice/consent-set', consented: true });
+  s = reduce(s, { type: 'voice/intent-recognized', intent: 'assist', nowMs: 1 });
+  assert.equal(s.hud.kind, 'idle', 'capture off → ignored, same guard as hotkey/pressed');
+  assert.equal(s.voice.lastIntent, 'assist', 'still recorded for diagnostics even when not armed');
+
+  s = reduce(s, { type: 'capture/toggle' });
+  s = reduce(s, { type: 'voice/intent-recognized', intent: 'explain', nowMs: 2 });
+  assert.equal(s.hud.kind, 'thinking');
+  assert.equal(s.voice.lastIntent, 'explain');
+  assert.equal(s.voice.listening, false, 'recognizing an intent always clears listening');
+});
+
+test('voice/error records a message and clears listening without touching hud', () => {
+  let s = reduce(initialState(consented), { type: 'voice/consent-set', consented: true });
+  s = reduce(s, { type: 'voice/ptt-start' });
+  s = reduce(s, { type: 'voice/error', message: 'Didn’t catch that.' });
+  assert.equal(s.voice.listening, false);
+  assert.equal(s.voice.lastError, 'Didn’t catch that.');
+  assert.equal(s.hud.kind, 'idle');
+});
