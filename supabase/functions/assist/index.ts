@@ -35,10 +35,41 @@ function refuse(
   );
 }
 
+// --- Hybrid provider registry (ADR-009) --------------------------------------
+// Model aliases are provider-prefixed ("groq:<model>", "gemini:<model>",
+// "openai:<model>"); un-prefixed aliases resolve to openai for back-compat.
+// Cross-provider fallback keeps the loop alive when one vendor fails.
+interface ModelProvider {
+  baseUrl: string;
+  key: string | undefined;
+}
+
+const PROVIDERS: Record<string, ModelProvider> = {
+  groq: {
+    baseUrl: Deno.env.get('GROQ_BASE_URL') ?? 'https://api.groq.com/openai/v1',
+    key: Deno.env.get('GROQ_API_KEY'),
+  },
+  gemini: {
+    baseUrl: Deno.env.get('GEMINI_BASE_URL') ??
+      'https://generativelanguage.googleapis.com/v1beta/openai',
+    key: Deno.env.get('GEMINI_API_KEY'),
+  },
+  openai: {
+    baseUrl: Deno.env.get('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1',
+    key: Deno.env.get('OPENAI_API_KEY'),
+  },
+};
+
+function resolveModel(alias: string): { provider: ModelProvider; model: string } {
+  const idx = alias.indexOf(':');
+  if (idx === -1) return { provider: PROVIDERS.openai, model: alias };
+  return { provider: PROVIDERS[alias.slice(0, idx)] ?? PROVIDERS.openai, model: alias.slice(idx + 1) };
+}
+
 const aliases: ModelAliases = {
-  primary: Deno.env.get('VISION_MODEL_PRIMARY') ?? 'gpt-5-nano',
-  escalation: Deno.env.get('VISION_MODEL_ESCALATION') ?? 'gpt-5.4-mini',
-  fallback: Deno.env.get('VISION_MODEL_FALLBACK') ?? 'gemini-2.5-flash-lite',
+  primary: Deno.env.get('VISION_MODEL_PRIMARY') ?? 'groq:meta-llama/llama-4-scout-17b-16e-instruct',
+  escalation: Deno.env.get('VISION_MODEL_ESCALATION') ?? 'gemini:gemini-2.5-flash',
+  fallback: Deno.env.get('VISION_MODEL_FALLBACK') ?? 'gemini:gemini-flash-lite-latest',
 };
 const breaker = new CostCircuitBreaker(
   Number(Deno.env.get('COST_BREAKER_USD_MICROS') ?? 500),
@@ -67,16 +98,21 @@ interface ModelResult {
 }
 
 async function callVisionModel(
-  model: string,
+  modelAlias: string,
   stablePrefix: string,
   volatile: string,
   frameB64: string,
 ): Promise<ModelResult> {
   const started = performance.now();
-  const res = await fetch(`${Deno.env.get('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1'}/chat/completions`, {
+  const { provider, model } = resolveModel(modelAlias);
+  if (!provider.key) {
+    console.error('model_provider_unconfigured', { model: modelAlias });
+    return { response: null, model: modelAlias, inputTokens: 0, outputTokens: 0, costUsdMicros: 0 };
+  }
+  const res = await fetch(`${provider.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
-      authorization: `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+      authorization: `Bearer ${provider.key}`,
       'content-type': 'application/json',
     },
     body: JSON.stringify({
@@ -100,8 +136,8 @@ async function callVisionModel(
     }),
   });
   if (!res.ok) {
-    console.error('model_call_failed', { model, status: res.status, ms: performance.now() - started });
-    return { response: null, model, inputTokens: 0, outputTokens: 0, costUsdMicros: 0 };
+    console.error('model_call_failed', { model: modelAlias, status: res.status, ms: performance.now() - started });
+    return { response: null, model: modelAlias, inputTokens: 0, outputTokens: 0, costUsdMicros: 0 };
   }
   const body = await res.json();
   const usage = body.usage ?? {};
@@ -110,7 +146,7 @@ async function callVisionModel(
   );
   return {
     response: parsed.success ? parsed.data : null,
-    model,
+    model: modelAlias,
     inputTokens: usage.prompt_tokens ?? 0,
     outputTokens: usage.completion_tokens ?? 0,
     // Micro-USD accounting from env-configured per-token rates (vendor prices drift; ADR-004).
@@ -121,17 +157,33 @@ async function callVisionModel(
   };
 }
 
+// Embeddings must match vector(1536) in 003_embeddings.sql; providers are tried in
+// order and any failure degrades to null (retrieval simply returns no chunks).
+const EMBEDDING_MODELS: Record<string, { model: string; dimensions?: number }> = {
+  gemini: { model: Deno.env.get('GEMINI_EMBEDDING_MODEL') ?? 'gemini-embedding-001', dimensions: 1536 },
+  openai: { model: Deno.env.get('TEXT_EMBEDDING_MODEL') ?? 'text-embedding-3-small' },
+};
+
 async function embedQuery(text: string): Promise<number[] | null> {
-  const res = await fetch(`${Deno.env.get('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1'}/embeddings`, {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({ model: Deno.env.get('TEXT_EMBEDDING_MODEL') ?? 'text-embedding-3-small', input: text }),
-  });
-  if (!res.ok) return null;
-  return (await res.json()).data?.[0]?.embedding ?? null;
+  const order = (Deno.env.get('EMBEDDINGS_PROVIDER_ORDER') ?? 'gemini,openai').split(',');
+  for (const name of order) {
+    const provider = PROVIDERS[name.trim()];
+    const spec = EMBEDDING_MODELS[name.trim()];
+    if (!provider?.key || !spec) continue;
+    try {
+      const res = await fetch(`${provider.baseUrl}/embeddings`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${provider.key}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ model: spec.model, input: text, ...(spec.dimensions ? { dimensions: spec.dimensions } : {}) }),
+      });
+      if (!res.ok) continue;
+      const embedding = (await res.json()).data?.[0]?.embedding ?? null;
+      if (Array.isArray(embedding) && embedding.length === 1536) return embedding;
+    } catch {
+      // provider unreachable — try the next one
+    }
+  }
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -271,8 +323,15 @@ Deno.serve(async (req) => {
 
     let result = await callVisionModel(primaryModel, stablePrefix, volatile, request.frame_b64);
     if (result.response === null) {
-      // Retry once, then degrade — never a crash (§1.2).
+      // Retry once on the same alias (§1.2).
       result = await callVisionModel(primaryModel, stablePrefix, volatile, request.frame_b64);
+    }
+    if (result.response === null && aliases.fallback !== primaryModel) {
+      // ADR-009 hybrid resilience: a full provider outage fails over to the
+      // other vendor before degrading to NO_ADVICE.
+      const spent = result;
+      result = await callVisionModel(aliases.fallback, stablePrefix, volatile, request.frame_b64);
+      result.costUsdMicros += spent.costUsdMicros;
     }
     if (
       result.response !== null &&

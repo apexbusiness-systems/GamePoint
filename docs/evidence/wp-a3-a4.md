@@ -141,3 +141,37 @@ in its pre-proof state (plus migration 008, which is the intended change).
   the same (now-proven) backend loop → HUD.
 - Registry compliance titles: prod registry matches compliance-matrix.md (16 rows
   verified live, 5 cleared runtime-eligible).
+
+---
+
+# Hybrid provider routing + brand wordmark — 2026-07-09 (ADR-009)
+
+## Hybrid intelligence (Groq + Gemini, free tier, zero new dependencies)
+- Provider-prefixed aliases; defaults: primary `groq:meta-llama/llama-4-scout-17b-16e-instruct`,
+  fallback `gemini:gemini-flash-lite-latest`, escalation `gemini:gemini-2.5-flash` (off, ADR-004).
+- Cascade: primary → retry → cross-provider fallback → NO_ADVICE. Missing key = fail-fast, never throw.
+- Embeddings: `EMBEDDINGS_PROVIDER_ORDER=gemini,openai`, gemini-embedding-001 pinned to 1536 dims
+  (matches vector(1536)); currently degrades to null — Gemini API not enabled on the key's Google project.
+- Both providers verified by direct call before deploy (Groq strict json_schema ✓; Gemini
+  `gemini-flash-lite-latest` + `gemini-3.1-flash-lite` ✓; `gemini-2.5-flash-lite` retired for new users).
+
+## Live production proof (deployed assist, real traffic)
+| Probe | Result |
+|---|---|
+| Full loop, real frame | 200 — **real advice from `groq:…llama-4-scout…`** ("Move to a safe location…"), `outcome=ok`, honest `not_verified=true` (no evidence corpus yet), request_id correlated |
+| **Forced failover** (primary set to a nonexistent groq model) | 200 — served by **`gemini:gemini-flash-lite-latest`**, `outcome=ok`; telemetry records the serving alias per provider |
+| Restore + cleanup | primary restored; test user deleted (cascade), prod clean |
+
+## Key placement (question answered)
+Model provider keys (`GROQ_API_KEY`, `GEMINI_API_KEY`) belong in **Supabase Edge Function
+secrets only** — set via `supabase secrets set` (done). NOT Cloudflare (static hosting only,
+ADR-005), NOT GitHub (CI never calls models), never `VITE_*` (invariant 10).
+
+## Brand wordmark (GPA)
+- `gpa-wordmark.png` installed at `apps/web/public/art/` + `apps/overlay/public/art/`
+  (trimmed, 800px, palette-optimized 47 KB) + generated `favicon.png` (web).
+- All 6 old logo instances replaced (web sidebar brand, auth-card brand, web mockup
+  gp-chip + HUD glyph, overlay mockup gp-chip + HUD glyph); `.brand-mark` markup and
+  CSS deleted repo-wide — zero remaining `brand-mark`/`<b>G</b>` references.
+- Verified: typecheck PASS, 35 web+overlay tests PASS, both builds PASS, wordmark +
+  favicon present in dist.
