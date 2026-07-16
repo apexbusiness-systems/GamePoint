@@ -315,7 +315,7 @@ function MarketingHero(): React.JSX.Element {
         <span className="demo-chip animate-enter" style={{ marginBottom: '1rem', display: 'inline-block' }}>PRIVATE BETA</span>
         <h1 className="animate-enter delay-1">The AI Coach That Watches Your Game, Not Your Screen.</h1>
         <p className="animate-enter delay-2">GamePoint is the coach in your corner: it watches the fight, it never touches the controls. Real-time positioning and decision advice — zero game injection, 100% safe.</p>
-        <button className="primary-cta animate-enter delay-3" onClick={() => navigate('/app')} type="button">Join Private Beta</button>
+        <button className="primary-cta animate-enter delay-3" onClick={() => navigate('/app')} type="button">Start Private Beta</button>
       </div>
     </section>
   );
