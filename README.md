@@ -39,7 +39,7 @@ governance/ ────────── compliance-matrix.md + CI gates (comp
 
 **The coaching loop (deployed, live-verified 2026-07-09):** hotkey → foreground probe → DXGI frame → JPEG → `AssistRequest` (Zod) → Edge `assist`: JWT → session ownership → per-user rate limit → title gate (SQL) → retrieval → **hybrid model cascade** → Advantage Check → `coaching_responses` insert → Realtime broadcast on private `session:{id}` → overlay HUD. Every hop carries a `request_id` (ADR-008).
 
-**Hybrid intelligence (ADR-009):** provider-prefixed model aliases (`groq:` / `gemini:` / `openai:`) with cross-provider failover and an adaptive health circuit — a provider that hard-fails is cooled down and skipped instantly, then auto-retried. Primary: Groq Llama 4 Scout · Fallback: Gemini Flash Lite. Embeddings: Gemini (1536-dim, matches `vector(1536)`).
+**Hybrid intelligence (ADR-009 — Groq & Gemini Only):** provider-prefixed model aliases (`groq:` / `gemini:`) with cross-provider failover and an adaptive health circuit — a provider that hard-fails is cooled down and skipped instantly, then auto-retried (`ASSIST_ESCALATION_ALLOWED=true`). Primary: Groq Llama 4 Scout (`GROQ_API_KEY`) · Fallback: Gemini Flash Lite (`GEMINI_API_KEY`). **OpenAI strictly excluded**: `EMBEDDINGS_PROVIDER_ORDER=gemini` ensures retrieval embeddings (`gemini-embedding-001`, 1536-dim) never fall back to legacy OpenAI endpoints.
 
 ## Quickstart
 
@@ -57,7 +57,7 @@ Rust service: `cd services/capture-win && cargo clippy --all-targets -- -D warni
 Ingest: `cd packages/ingest && PYTHONPATH=. pytest -q`.
 Edge functions: `cd supabase/functions && deno check assist/index.ts …` (CI job `edge-typecheck`).
 
-Copy `ENV.example` for the full variable reference. Browser build vars (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`) are set in Cloudflare build settings; model keys (`GROQ_API_KEY`, `GEMINI_API_KEY`) are Supabase Edge secrets **only**.
+Copy `ENV.example` for the full variable reference. Browser build vars (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`) must be set under **Cloudflare Workers Builds → Build environment variables** so they are compiled by Vite; model keys (`GROQ_API_KEY`, `GEMINI_API_KEY`) are Supabase Edge secrets **only**.
 
 ## CI (every PR / push to main)
 

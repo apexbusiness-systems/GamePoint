@@ -11,3 +11,5 @@
 8. Never bypass the compliance or license CI gates to make a build pass.
 9. Do not write to the user's mounted GamePoint folder from bash (silent write truncation);
    work in a clean clone and deliver via PR.
+10. Never configure, require, or fall back to OpenAI API keys (`OPENAI_API_KEY`) or models (`openai:*`).
+    All intelligence and embedding cascades must run strictly on Groq (`GROQ_API_KEY`) and Gemini (`GEMINI_API_KEY`).

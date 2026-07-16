@@ -28,16 +28,16 @@ These run exclusively in Supabase Deno runtime. Never in a browser bundle.
 
 ## Model Provider Config (Server-Side — Supabase Edge secrets ONLY, ADR-009)
 
-Aliases are provider-prefixed: `<provider>:<model>` with providers `groq`, `gemini`, `openai`.
+Aliases are provider-prefixed: `<provider>:<model>` with active providers `groq` and `gemini` (`openai` excluded/deprecated).
 
 | Variable | Description |
 |----------|-------------|
-| `GROQ_API_KEY` / `GEMINI_API_KEY` / `OPENAI_API_KEY` | Provider keys — never in Cloudflare, GitHub, or `VITE_*` |
-| `GROQ_BASE_URL` / `GEMINI_BASE_URL` / `OPENAI_BASE_URL` | Optional endpoint overrides (OpenAI-compatible) |
+| `GROQ_API_KEY` / `GEMINI_API_KEY` | Provider keys — never in Cloudflare, GitHub, or `VITE_*` |
+| `GROQ_BASE_URL` / `GEMINI_BASE_URL` | Optional endpoint overrides |
 | `VISION_MODEL_PRIMARY` | Default `groq:meta-llama/llama-4-scout-17b-16e-instruct` |
-| `VISION_MODEL_ESCALATION` | Default `gemini:gemini-2.5-flash` (escalation off by default, ADR-004) |
+| `VISION_MODEL_ESCALATION` | Default `gemini:gemini-2.5-flash` (`ASSIST_ESCALATION_ALLOWED=true` required) |
 | `VISION_MODEL_FALLBACK` | Default `gemini:gemini-flash-lite-latest` (cross-provider failover) |
-| `EMBEDDINGS_PROVIDER_ORDER` | Default `gemini,openai`; Gemini pinned to 1536 dims (`vector(1536)`) |
+| `EMBEDDINGS_PROVIDER_ORDER` | Default `gemini` (`openai` excluded); Gemini pinned to 1536 dims (`vector(1536)`) |
 | `GEMINI_EMBEDDING_MODEL` / `TEXT_EMBEDDING_MODEL` | Embedding model overrides per provider |
 | `PROVIDER_COOLDOWN_MS` | Adaptive health circuit cooldown (default 120000) |
 | `ASSIST_RATE_LIMIT_PER_MIN` | Per-user sliding-window rate limit (default 12) |
