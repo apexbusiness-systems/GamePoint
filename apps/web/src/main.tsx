@@ -355,17 +355,28 @@ function DashboardMockup(): React.JSX.Element {
 }
 
 function MarketingLanding(): React.JSX.Element {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
   useEffect(() => {
+    let ticking = false;
     const handleMouseMove = (e: MouseEvent) => {
-      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
-      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          if (containerRef.current) {
+            containerRef.current.style.setProperty('--mouse-x', `${e.clientX}px`);
+            containerRef.current.style.setProperty('--mouse-y', `${e.clientY}px`);
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   return (
-    <div className="marketing-page">
+    <div className="marketing-page" ref={containerRef}>
       <header className="marketing-nav animate-enter">
         <strong><b style={{ color: 'var(--lime)', marginRight: '8px'}}>G</b> GAMEPOINT</strong>
         <button className="ghost-button" onClick={() => navigate('/app')} type="button">Sign In</button>

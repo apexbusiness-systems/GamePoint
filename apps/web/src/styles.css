@@ -30,7 +30,6 @@ body {
     radial-gradient(circle at 70% 42%, rgba(255, 139, 23, 0.09), transparent 28rem),
     #030402;
   background-size: 200% 200%;
-  animation: ambientBreathe 18s ease-in-out infinite alternate;
 }
 
 body::before {
@@ -1592,6 +1591,8 @@ button.coach-tile.active { border-color: var(--lime, #c7ff13); box-shadow: 0 0 1
 }
 
 .marketing-nav {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 1400px;
   display: flex;
@@ -1602,6 +1603,8 @@ button.coach-tile.active { border-color: var(--lime, #c7ff13); box-shadow: 0 0 1
 }
 
 .marketing-hero {
+  position: relative;
+  z-index: 1;
   max-width: 900px;
   text-align: center;
   padding: 100px 24px 80px;
@@ -1653,6 +1656,8 @@ button.coach-tile.active { border-color: var(--lime, #c7ff13); box-shadow: 0 0 1
    Transform the raw dashboard into a premium showcase asset 
 */
 .dashboard-showcase {
+  position: relative;
+  z-index: 1;
   width: min(90vw, 1600px);
   background: #060704;
   border: 1px solid rgba(199, 255, 19, 0.15);
@@ -1745,16 +1750,27 @@ button.coach-tile.active { border-color: var(--lime, #c7ff13); box-shadow: 0 0 1
 
 /* Moving mesh background */
 .marketing-page {
+  position: relative;
+  background: linear-gradient(rgba(6, 7, 4, 0.8), rgba(6, 7, 4, 1));
+}
+
+.marketing-page::after {
+  content: "";
+  position: absolute;
+  top: -400px;
+  left: -400px;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
   background: 
-    linear-gradient(rgba(6, 7, 4, 0.8), rgba(6, 7, 4, 1)),
     linear-gradient(rgba(199, 255, 19, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(199, 255, 19, 0.03) 1px, transparent 1px);
-  background-size: 100% 100%, 40px 40px, 40px 40px;
-  background-position: 0 0, 0 0, 0 0;
+  background-size: 40px 40px;
   animation: bgPan 60s linear infinite;
 }
 
 @keyframes bgPan {
-  0% { background-position: 0 0, 0 0, 0 0; }
-  100% { background-position: 0 0, 0 400px, 400px 0; }
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(400px, 400px); }
 }
