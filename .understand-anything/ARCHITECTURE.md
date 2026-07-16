@@ -45,7 +45,7 @@ GamePoint/
 | Hosting (web) | Cloudflare Workers (static assets + canonical-host worker) | `wrangler.jsonc`, [`docs/runbooks/cloudflare-pages.md`](../docs/runbooks/cloudflare-pages.md) |
 | Backend | Supabase (Auth, Postgres+RLS, Edge Functions, Realtime) | `supabase/` — migrations 001–008 applied to prod |
 | Capture service | Rust (windows-rs, DXGI Desktop Duplication) | `services/capture-win/` |
-| Models | Hybrid providers: Groq / Gemini / OpenAI-compatible (ADR-009) | Aliases `groq:…`, `gemini:…`; adaptive health circuit |
+| Models | Strict Groq + Gemini only (ADR-009) | Aliases `groq:…`, `gemini:…`; `openai` excluded; adaptive health circuit |
 | Ingestion | Python 3.11 + pytest | `packages/ingest/` |
 
 ## Dependency Graph

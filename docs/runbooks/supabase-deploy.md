@@ -16,7 +16,7 @@ psql "$SUPABASE_DB_URL" -c "select count(*) from titles;"        # expect 16
 supabase test db                                                 # runs supabase/tests/*.sql
 
 # Secrets (P2) — names only, never values in evidence
-supabase secrets set OPENAI_API_KEY=... GEMINI_API_KEY=... CORS_ALLOWED_ORIGINS=...
+supabase secrets set GROQ_API_KEY=... GEMINI_API_KEY=... CORS_ALLOWED_ORIGINS=...
 supabase secrets list
 
 # Edge Functions

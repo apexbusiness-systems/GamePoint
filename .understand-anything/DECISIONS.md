@@ -13,4 +13,4 @@
 | [ADR-006](../docs/adr/ADR-006-dispatch-https-json.md) | Dispatch HTTPS/JSON | Accepted | Capture-service dispatch transport is HTTPS/JSON, not gRPC. |
 | [ADR-007](../docs/adr/ADR-007-zod-single-source-contracts.md) | Zod Single Contract Source | Accepted | Zod schemas in `packages/contracts` are canonical; edge copies are hash-synced, Rust mirrors fixture-parity tested. |
 | [ADR-008](../docs/adr/ADR-008-session-config-handoff.md) | Session Config Handoff + Assist Taxonomy | Accepted | Overlay binds to a validated web-issued SessionConfig; assist gains error taxonomy, request correlation, and per-user rate limiting. |
-| [ADR-009](../docs/adr/ADR-009-hybrid-provider-routing.md) | Hybrid Provider Routing | Accepted | Provider-prefixed model aliases (groq:/gemini:/openai:) with cross-provider failover; keys live in Supabase secrets only. |
+| [ADR-009](../docs/adr/ADR-009-hybrid-provider-routing.md) | Hybrid Provider Routing | Accepted | Provider-prefixed model aliases (`groq:`/`gemini:`) with cross-provider failover (`openai` excluded); keys live in Supabase secrets only. |
